@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "dist/seeder",
+    "rootDir": "./libs",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./libs/*"]
+    }
+  },
+  "include": ["./libs/**/*.ts"]
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "../../../libs/connnectMongoDB";
 import { User } from "../../../libs/models/users";
 import bcrypt from "bcryptjs"; // Import bcryptjs
+import Roles from "../../../libs/models/roles";
 
 // POST: Create a new user
 export async function POST(req: NextRequest) {
@@ -27,10 +28,27 @@ export async function POST(req: NextRequest) {
     // Hash the password using bcrypt
     const hashedPassword = await bcrypt.hash(userData.password, 10); // Hash with salt rounds of 10
 
-    // Create a new user with the hashed password
+    // Assign 'user' role by default if not specified
+    let roleId = userData.roles;
+    if (!roleId) {
+      const userRole = await Roles.findOne({ name: "user" });
+      if (!userRole) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Default 'user' role not found. Please seed roles first.",
+          },
+          { status: 500 }
+        );
+      }
+      roleId = userRole._id;
+    }
+
+    // Create a new user with the hashed password and role
     const newUser = new User({
       ...userData,
       password: hashedPassword, // Set the hashed password
+      roles: roleId,
     });
 
     // Save the new user to the database
@@ -62,8 +80,8 @@ export async function GET() {
     // Connect to MongoDB
     await connectMongoDB();
 
-    // Fetch all users from the database
-    const users = await User.find();
+    // Fetch all users from the database with populated roles
+    const users = await User.find().populate("roles");
 
     // Return the fetched users as a response
     return NextResponse.json({ success: true, data: users }, { status: 200 });

@@ -9,13 +9,19 @@ export async function seedUser() {
     await User.deleteMany({});
     console.log("🗑️ All existing users deleted.");
 
+    // Fetch the admin role from the Roles collection
+    const adminRole = await mongoose.model("Roles").findOne({ name: "admin" });
+    if (!adminRole) {
+      throw new Error("Admin role not found. Please seed roles first.");
+    }
+
     const hashedPassword = await bcrypt.hash("password123", 10);
     const userData = {
       name: "John Doe",
       email: "john@example.com",
       password: hashedPassword,
       profilePicture: null,
-      roles: new mongoose.Types.ObjectId(), // Replace with a real role ObjectId in real seeding
+      roles: adminRole._id, // Use the admin role's ObjectId
       address: "123 Main St, Los Angeles, CA",
     };
 

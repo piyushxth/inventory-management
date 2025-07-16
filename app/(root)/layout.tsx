@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./homeGlobals.css";
 import Navbar from "@/components/client/Navbar";
 import Navheader from "@/components/client/Navheader";
+import Navbody from "@/components/client/Navbody";
+import StickyTest from "@/components/client/demo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,11 +36,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.className} text-primary-300 font-sans antialiased`}
       >
-        <header>
-          <Navheader />
+        <Navheader />
+        <Navbody />
+        <div className="relative">
           <Navbar />
-        </header>
-        {children}
+          {children}
+        </div>
       </body>
     </html>
   );

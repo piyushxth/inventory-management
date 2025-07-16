@@ -1,46 +1,45 @@
-'use client'
-import React, { useState } from 'react';
+"use client";
+import React from "react";
+import { motion } from "framer-motion";
+
+const marqueeItems = [
+  "Free Delivery Available",
+  "+50,000 reviews rated 4.9/5",
+  "Taxes + Duties Included",
+];
 
 const NavHeader = () => {
-  const [isVisible, setIsVisible] = useState(true);
-
-  if (!isVisible) return null;
-
   return (
-    <div className="relative bg-black text-white py-3 px-4 bg-accent-400">
-      <div className="container mx-auto">
-        <div className="flex items-center justify-center relative">
-          {/* Close Button */}
-          <button 
-            onClick={() => setIsVisible(false)}
-            className="absolute right-0 p-2 hover:bg-gray-800 rounded-full transition-colors"
-            aria-label="Close announcement"
-          >
-            <svg 
-              className="w-5 h-5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth="2" 
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-
-          {/* Announcement Text */}
-          <div className="text-center">
-            <p className="text-sm md:text-base font-medium">
-              🎉 Get 10% off on your first purchase! Use code: 
-              <span className="font-bold ml-1">WELCOME10</span>
-            </p>
-          </div>
-        </div>
+    <section className="relative bg-black py-[6px]">
+      {/* Marquee for small screens */}
+      <div className="block md:hidden overflow-x-hidden w-full">
+        <motion.ul
+          className="flex gap-16 whitespace-nowrap fs-100 uppercase fw-semibold text-white"
+          initial={{ x: "100%" }}
+          animate={{ x: "-100%" }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 12,
+            ease: "linear",
+          }}
+        >
+          {marqueeItems.concat(marqueeItems).map((item, idx) => (
+            <li key={idx} className="px-4">
+              {item}
+            </li>
+          ))}
+        </motion.ul>
       </div>
-    </div>
+      {/* Static for medium and up */}
+      <div className="hidden md:flex justify-center">
+        <ul className="flex justify-center gap-[240px] fs-100 uppercase fw-semibold text-white">
+          {marqueeItems.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 };
 

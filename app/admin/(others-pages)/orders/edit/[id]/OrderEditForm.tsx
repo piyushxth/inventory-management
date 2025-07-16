@@ -75,7 +75,10 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [initialData, setInitialData] = useState<OrderFormData | null>(null);
+  const [items, setItems] = useState([{ product: "", quantity: 1, price: 0 }]);
+  const [discount, setDiscount] = useState(0);
+  const [additionalPrice, setAdditionalPrice] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
   const router = useRouter();
 
   const {
@@ -84,7 +87,6 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
     formState: { errors, isSubmitting },
     setValue,
     watch,
-    control,
     reset,
   } = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -101,12 +103,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "items",
-  });
-
-  // Fetch products and (if edit) order data
+  // Fetch products
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -118,30 +115,6 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
         } else {
           setDataError("Failed to load products");
         }
-        if (mode === "edit" && orderId) {
-          const orderRes = await axios.get(`/api/orders/${orderId}`);
-          if (orderRes.data.success) {
-            // Convert items to correct format
-            const order = orderRes.data.data;
-            reset({
-              ...order,
-              discount: order.discount || 0,
-              additionalPrice: order.additionalPrice || 0,
-              totalAmount: order.totalAmount || 0,
-              orderStatus: order.orderStatus,
-              paymentStatus: order.paymentStatus,
-              paymentMethod: order.paymentMethod,
-              orderNote: order.orderNote || "",
-              items: order.items.map((item: any) => ({
-                product: item.product?._id || item.product,
-                quantity: item.quantity,
-                price: item.price,
-              })),
-            });
-          } else {
-            setDataError("Failed to load order");
-          }
-        }
       } catch (error: any) {
         setDataError(error.response?.data?.message || "Failed to load data");
       } finally {
@@ -149,51 +122,79 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
       }
     };
     fetchData();
-    // eslint-disable-next-line
-  }, [mode, orderId, reset]);
+  }, []);
 
-  // Calculate total amount
+  // Calculate total amount dynamically
   useEffect(() => {
-    const items = watch("items");
-    const discount = watch("discount") || 0;
-    const additionalPrice = watch("additionalPrice") || 0;
     const total =
-      (items?.reduce(
-        (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
-        0
-      ) || 0) -
-      discount +
-      additionalPrice;
+      items.reduce((sum, item) => sum + item.price, 0) -
+      (discount || 0) +
+      (additionalPrice || 0);
+    setTotalAmount(total >= 0 ? total : 0);
     setValue("totalAmount", total >= 0 ? total : 0);
-    // eslint-disable-next-line
-  }, [watch("items"), watch("discount"), watch("additionalPrice")]);
+    setValue("items", items);
+    setValue("discount", discount);
+    setValue("additionalPrice", additionalPrice);
+  }, [items, discount, additionalPrice, setValue]);
+
+  const handleProductChange = (index: number, productId: string) => {
+    const selectedProduct = products.find((p) => p._id === productId);
+    if (!selectedProduct) return;
+    setItems((prev) => {
+      const newItems = [...prev];
+      newItems[index] = {
+        product: productId,
+        quantity: 1,
+        price: selectedProduct.selling_price,
+      };
+      return newItems;
+    });
+  };
+
+  const handleQuantityChange = (index: number, quantity: number) => {
+    setItems((prev) => {
+      const newItems = [...prev];
+      const selectedProduct = products.find(
+        (p) => p._id === newItems[index].product
+      );
+      if (!selectedProduct) return newItems;
+      newItems[index].quantity = quantity < 1 ? 1 : quantity;
+      newItems[index].price =
+        selectedProduct.selling_price * newItems[index].quantity;
+      return newItems;
+    });
+  };
+
+  const addItem = () => {
+    setItems((prev) => [...prev, { product: "", quantity: 1, price: 0 }]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, i) => i !== index)
+    );
+  };
 
   const onSubmit = async (data: OrderFormData) => {
     try {
       setIsLoading(true);
-      if (mode === "add") {
-        const response = await axios.post("/api/orders", data);
-        if (response.data.success) {
-          alert("Order created successfully!");
-          router.push("/admin/orders");
-        } else {
-          alert(response.data.message || "Failed to create order");
-        }
-      } else if (mode === "edit" && orderId) {
-        const response = await axios.put(`/api/orders/${orderId}`, data);
-        if (response.data.success) {
-          alert("Order updated successfully!");
-          router.push("/admin/orders");
-        } else {
-          alert(response.data.message || "Failed to update order");
-        }
+      const response = await axios.post("/api/orders", {
+        ...data,
+        items,
+        discount,
+        additionalPrice,
+        totalAmount,
+      });
+      if (response.data.success) {
+        alert("Order created successfully!");
+        router.push("/admin/orders");
+      } else {
+        alert(response.data.message || "Failed to create order");
       }
     } catch (error: any) {
       alert(
         error.response?.data?.message ||
-          `Error ${
-            mode === "add" ? "creating" : "updating"
-          } order. Please try again.`
+          `Error creating order. Please try again.`
       );
     } finally {
       setIsLoading(false);
@@ -264,9 +265,9 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
           </ComponentCard>
 
           <ComponentCard title="Order Items">
-            {fields.map((item, index) => (
+            {items.map((item, index) => (
               <div
-                key={item.id}
+                key={index}
                 className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded-lg"
               >
                 <div>
@@ -278,9 +279,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                         ? "No products available"
                         : "Select a product"
                     }
-                    onChange={(value) =>
-                      setValue(`items.${index}.product`, value)
-                    }
+                    onChange={(value) => handleProductChange(index, value)}
                     defaultValue={item.product}
                   />
                   {errors.items?.[index]?.product && (
@@ -294,9 +293,10 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                   <Input
                     type="number"
                     min={1}
-                    {...register(`items.${index}.quantity`, {
-                      valueAsNumber: true,
-                    })}
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleQuantityChange(index, Number(e.target.value))
+                    }
                   />
                   {errors.items?.[index]?.quantity && (
                     <p className="text-red-500 text-sm mt-1">
@@ -305,26 +305,19 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                   )}
                 </div>
                 <div>
-                  <Label>Price *</Label>
+                  <Label>Price</Label>
                   <Input
                     type="number"
-                    min={0}
-                    step={0.01}
-                    {...register(`items.${index}.price`, {
-                      valueAsNumber: true,
-                    })}
+                    value={item.price}
+                    readOnly
+                    className="bg-gray-100"
                   />
-                  {errors.items?.[index]?.price && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.items[index]?.price?.message}
-                    </p>
-                  )}
                 </div>
                 <div className="flex items-end">
                   <button
                     type="button"
-                    onClick={() => remove(index)}
-                    disabled={fields.length === 1}
+                    onClick={() => removeItem(index)}
+                    disabled={items.length === 1}
                     className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-3 py-2 rounded-lg transition"
                   >
                     Remove
@@ -334,7 +327,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
             ))}
             <button
               type="button"
-              onClick={() => append({ product: "", quantity: 1, price: 0 })}
+              onClick={addItem}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
             >
               Add Item
@@ -417,7 +410,8 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                   type="number"
                   min={0}
                   step={0.01}
-                  {...register("discount", { valueAsNumber: true })}
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value))}
                 />
                 {errors.discount && (
                   <p className="text-red-500 text-sm mt-1">
@@ -431,7 +425,8 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                   type="number"
                   min={0}
                   step={0.01}
-                  {...register("additionalPrice", { valueAsNumber: true })}
+                  value={additionalPrice}
+                  onChange={(e) => setAdditionalPrice(Number(e.target.value))}
                 />
                 {errors.additionalPrice && (
                   <p className="text-red-500 text-sm mt-1">
@@ -443,7 +438,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                 <Label>Total Amount</Label>
                 <Input
                   type="number"
-                  value={watch("totalAmount")}
+                  value={totalAmount}
                   readOnly
                   className="bg-gray-100"
                 />

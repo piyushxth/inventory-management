@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "../../../libs/connnectMongoDB";
 import { Product } from "../../../libs/models/product";
+import { AdminLog } from "@/libs/models/adminLog";
+import { getToken } from "next-auth/jwt";
 import "../../../libs/models/category";
 import mongoose from "mongoose";
 
@@ -8,8 +10,24 @@ export async function POST(req: NextRequest) {
   try {
     const productData = await req.json();
     await connectMongoDB();
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const newProduct = new Product(productData);
     const savedProduct = await newProduct.save();
+    // Log admin action
+    if (token && token.role === "admin") {
+      console.log("Admin log token:", token);
+      try {
+        await AdminLog.create({
+          admin: token.id,
+          action: "create",
+          entity: "product",
+          entityId: savedProduct._id,
+          details: { name: savedProduct.name, ...productData },
+        });
+      } catch (logErr) {
+        console.error("Failed to log admin action (create):", logErr);
+      }
+    }
     return NextResponse.json(
       {
         success: true,
@@ -19,6 +37,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Error in product POST:", error);
     return NextResponse.json(
       {
         success: false,
@@ -74,6 +93,7 @@ export async function DELETE(req: NextRequest) {
 
     // Connect to MongoDB
     await connectMongoDB();
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     // Delete multiple products
     const deleteResult = await Product.deleteMany({ _id: { $in: validIds } });
@@ -85,6 +105,22 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    // Log admin action
+    if (token && token.role === "admin") {
+      console.log("Admin log token:", token);
+      try {
+        await AdminLog.create({
+          admin: token.id,
+          action: "delete",
+          entity: "product",
+          entityId: validIds,
+          details: { count: deleteResult.deletedCount },
+        });
+      } catch (logErr) {
+        console.error("Failed to log admin action (delete):", logErr);
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -93,7 +129,7 @@ export async function DELETE(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error bulk deleting products:", error);
+    console.error("Error in product DELETE:", error);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }

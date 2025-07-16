@@ -7,9 +7,25 @@ import UserDropdown from "@/components/admin/header/UserDropdown";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<{
+    products: any[];
+    users: any[];
+    orders: any[];
+    suggestions?: {
+      products: any[];
+      users: any[];
+      orders: any[];
+    };
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -40,6 +56,47 @@ const AppHeader: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    setShowDropdown(!!value);
+    setLoading(true);
+    setResults(null);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (value.trim().length < 2) {
+      setLoading(false);
+      setResults(null);
+      return;
+    }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/admin/search?q=${encodeURIComponent(value)}`
+        );
+        const data = await res.json();
+        setResults(data);
+      } catch {
+        setResults({
+          products: [],
+          users: [],
+          orders: [],
+          suggestions: { products: [], users: [], orders: [] },
+        });
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+  };
+
+  const handleResultClick = (type: string, id: string) => {
+    setShowDropdown(false);
+    setSearch("");
+    setResults(null);
+    if (type === "product") router.push(`/admin/products/edit/${id}`);
+    if (type === "user") router.push(`/admin/users/edit/${id}`);
+    if (type === "order") router.push(`/admin/orders/view/${id}`);
+  };
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -86,18 +143,20 @@ const AppHeader: React.FC = () => {
 
           <Link href="/" className="lg:hidden">
             <Image
-              width={154}
+              width={160}
               height={32}
-              className="dark:hidden"
-              src="./images/logo/logo.svg"
+              className="dark:hidden w-[154px] h-auto"
+              src="/images/logo/logo.svg"
               alt="Logo"
+              priority
             />
             <Image
-              width={154}
+              width={160}
               height={32}
               className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
+              src="/images/logo/logo-dark.svg"
               alt="Logo"
+              style={{ width: "154px", height: "auto" }}
             />
           </Link>
 
@@ -122,7 +181,7 @@ const AppHeader: React.FC = () => {
           </button>
 
           <div className="hidden lg:block">
-            <form>
+            <form className="relative">
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none">
                   <svg
@@ -145,9 +204,366 @@ const AppHeader: React.FC = () => {
                   ref={inputRef}
                   type="text"
                   placeholder="Search or type command..."
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
+                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
+                  value={search}
+                  onChange={handleSearchChange}
+                  onFocus={() => setShowDropdown(!!search)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 />
-
+                {showDropdown && (
+                  <div className="absolute left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-900 dark:border-gray-800 max-h-80 overflow-y-auto">
+                    {loading ? (
+                      <div className="p-4 text-center text-gray-500">
+                        Searching...
+                      </div>
+                    ) : (
+                      results && (
+                        <>
+                          {results.products.length === 0 &&
+                          results.users.length === 0 &&
+                          results.orders.length === 0 ? (
+                            <>
+                              <div className="p-4 text-center text-gray-500">
+                                No results found
+                              </div>
+                              {results.suggestions && (
+                                <div>
+                                  <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                    Suggestions
+                                  </div>
+                                  {results.suggestions.products.length > 0 && (
+                                    <div>
+                                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                        Recent Products
+                                      </div>
+                                      {results.suggestions.products.map((p) => (
+                                        <div
+                                          key={p._id}
+                                          className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                          onClick={() =>
+                                            handleResultClick("product", p._id)
+                                          }
+                                        >
+                                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                            {p.images && p.images.length > 0 ? (
+                                              <img
+                                                src={p.images[0]}
+                                                alt={p.name}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <svg
+                                                  className="w-4 h-4 text-gray-400"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 20 20"
+                                                >
+                                                  <path
+                                                    fillRule="evenodd"
+                                                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                                    clipRule="evenodd"
+                                                  />
+                                                </svg>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                            {p.name}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {results.suggestions.users.length > 0 && (
+                                    <div>
+                                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                        Recent Users
+                                      </div>
+                                      {results.suggestions.users.map((u) => (
+                                        <div
+                                          key={u._id}
+                                          className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                          onClick={() =>
+                                            handleResultClick("user", u._id)
+                                          }
+                                        >
+                                          <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                            {u.profilePicture ? (
+                                              <img
+                                                src={u.profilePicture}
+                                                alt={u.name}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <svg
+                                                  className="w-4 h-4 text-gray-400"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 20 20"
+                                                >
+                                                  <path
+                                                    fillRule="evenodd"
+                                                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                                    clipRule="evenodd"
+                                                  />
+                                                </svg>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                              {u.name}
+                                            </span>
+                                            <span className="text-xs text-gray-400">
+                                              {u.email}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {results.suggestions.orders.length > 0 && (
+                                    <div>
+                                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                        Recent Orders
+                                      </div>
+                                      {results.suggestions.orders.map((o) => (
+                                        <div
+                                          key={o._id}
+                                          className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                          onClick={() =>
+                                            handleResultClick("order", o._id)
+                                          }
+                                        >
+                                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                            {o.items &&
+                                            o.items.length > 0 &&
+                                            o.items[0].product &&
+                                            o.items[0].product.images &&
+                                            o.items[0].product.images.length >
+                                              0 ? (
+                                              <img
+                                                src={
+                                                  o.items[0].product.images[0]
+                                                }
+                                                alt="Order product"
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center">
+                                                <svg
+                                                  className="w-4 h-4 text-gray-400"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 20 20"
+                                                >
+                                                  <path
+                                                    fillRule="evenodd"
+                                                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                                                    clipRule="evenodd"
+                                                  />
+                                                </svg>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex flex-col flex-1">
+                                            <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                              {o.customer?.name
+                                                ? `${o.customer.name} — `
+                                                : ""}
+                                              {o.items && o.items.length > 0
+                                                ? o.items.length === 1
+                                                  ? o.items[0].product?.name ||
+                                                    `Order #${o._id}`
+                                                  : `${
+                                                      o.items[0].product?.name
+                                                    } +${
+                                                      o.items.length - 1
+                                                    } more`
+                                                : `Order #${o._id}`}
+                                            </span>
+                                            <span className="text-xs text-gray-400">
+                                              ${o.totalAmount} •{" "}
+                                              {o.items?.length || 0} items •{" "}
+                                              {o.orderStatus}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {results.products.length > 0 && (
+                                <div>
+                                  <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                    Products
+                                  </div>
+                                  {results.products.map((p) => (
+                                    <div
+                                      key={p._id}
+                                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                      onClick={() =>
+                                        handleResultClick("product", p._id)
+                                      }
+                                    >
+                                      <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                        {p.images && p.images.length > 0 ? (
+                                          <img
+                                            src={p.images[0]}
+                                            alt={p.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            <svg
+                                              className="w-4 h-4 text-gray-400"
+                                              fill="currentColor"
+                                              viewBox="0 0 20 20"
+                                            >
+                                              <path
+                                                fillRule="evenodd"
+                                                d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                                clipRule="evenodd"
+                                              />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col flex-1">
+                                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                          {p.name}
+                                        </span>
+                                        <span className="text-xs text-gray-400">
+                                          ${p.selling_price} •{" "}
+                                          {p.availableQuantity} left
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {results.users.length > 0 && (
+                                <div>
+                                  <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                    Users
+                                  </div>
+                                  {results.users.map((u) => (
+                                    <div
+                                      key={u._id}
+                                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                      onClick={() =>
+                                        handleResultClick("user", u._id)
+                                      }
+                                    >
+                                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                        {u.profilePicture ? (
+                                          <img
+                                            src={u.profilePicture}
+                                            alt={u.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            <svg
+                                              className="w-4 h-4 text-gray-400"
+                                              fill="currentColor"
+                                              viewBox="0 0 20 20"
+                                            >
+                                              <path
+                                                fillRule="evenodd"
+                                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                                clipRule="evenodd"
+                                              />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                          {u.name}
+                                        </span>
+                                        <span className="text-xs text-gray-400">
+                                          {u.email}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {results.orders.length > 0 && (
+                                <div>
+                                  <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400">
+                                    Orders
+                                  </div>
+                                  {results.orders.map((o) => (
+                                    <div
+                                      key={o._id}
+                                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3"
+                                      onClick={() =>
+                                        handleResultClick("order", o._id)
+                                      }
+                                    >
+                                      <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                        {o.items &&
+                                        o.items.length > 0 &&
+                                        o.items[0].product &&
+                                        o.items[0].product.images &&
+                                        o.items[0].product.images.length > 0 ? (
+                                          <img
+                                            src={o.items[0].product.images[0]}
+                                            alt="Order product"
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            <svg
+                                              className="w-4 h-4 text-gray-400"
+                                              fill="currentColor"
+                                              viewBox="0 0 20 20"
+                                            >
+                                              <path
+                                                fillRule="evenodd"
+                                                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                                                clipRule="evenodd"
+                                              />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col flex-1">
+                                        <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                          {o.customer?.name
+                                            ? `${o.customer.name} — `
+                                            : ""}
+                                          {o.items && o.items.length > 0
+                                            ? o.items.length === 1
+                                              ? o.items[0].product?.name ||
+                                                `Order #${o._id}`
+                                              : `${o.items[0].product?.name} +${
+                                                  o.items.length - 1
+                                                } more`
+                                            : `Order #${o._id}`}
+                                        </span>
+                                        <span className="text-xs text-gray-400">
+                                          ${o.totalAmount} •{" "}
+                                          {o.items?.length || 0} items •{" "}
+                                          {o.orderStatus}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )
+                    )}
+                  </div>
+                )}
                 <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
                   <span> ⌘ </span>
                   <span> K </span>

@@ -1,13 +1,11 @@
 import mongoose from "mongoose";
+import Roles from "./models/roles";
 
 // Ensures the models are registered
 export const registerModels = () => {
-  // mongoose.models.GroupModel ||
-  //   (mongoose.model("GroupModel", GroupModel.schema),
-  //   console.log("GroupModel model registered successfully."));
-  // mongoose.models.Itinenary ||
-  //   (mongoose.model("Itinenary", Itinerary.schema),
-  //   console.log("Itinenary model registered successfully."));
+  mongoose.models.Roles ||
+    (mongoose.model("Roles", Roles.schema),
+    console.log("Roles model registered successfully."));
 };
 
 // Export the models to use in other parts of the app

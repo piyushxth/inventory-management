@@ -12,8 +12,16 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function MonthlyTarget() {
-  const series = [75.55];
+export default function MonthlyTarget({
+  target,
+  revenue,
+  progress,
+}: {
+  target: number;
+  revenue: number;
+  progress: number;
+}) {
+  const series = [Number(progress.toFixed(2))];
   const options: ApexOptions = {
     colors: ["#465FFF"],
     chart: {
@@ -81,7 +89,7 @@ export default function MonthlyTarget() {
               Monthly Target
             </h3>
             <p className="mt-1 font-normal text-gray-500 text-theme-sm dark:text-gray-400">
-              Target you’ve set for each month
+              Target you&apos;ve set for each month
             </p>
           </div>
           <div className="relative inline-block">
@@ -125,8 +133,8 @@ export default function MonthlyTarget() {
           </span>
         </div>
         <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          You earn $3287 today, it&apos;s higher than last month. Keep up your
-          good work!
+          You earn {revenue} today, it&apos;s higher than last month. Keep up
+          your good work!
         </p>
       </div>
 
@@ -136,7 +144,7 @@ export default function MonthlyTarget() {
             Target
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {target}
             <svg
               width="16"
               height="16"
@@ -161,7 +169,7 @@ export default function MonthlyTarget() {
             Revenue
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {revenue}
             <svg
               width="16"
               height="16"
@@ -186,7 +194,7 @@ export default function MonthlyTarget() {
             Today
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {revenue}
             <svg
               width="16"
               height="16"

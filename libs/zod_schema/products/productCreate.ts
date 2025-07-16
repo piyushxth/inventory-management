@@ -17,6 +17,7 @@ export const productCreateSchema = z.object({
   images: z.array(z.string()).min(1, "At least one image is required"),
   variants: z.array(variantSchema).min(1, "At least one variant is required"),
   availableQuantity: z.number().min(0, "Available quantity is required"),
+  initialStock: z.number().min(0, "Initial stock is required"),
 });
 
 export type TProductCreate = z.infer<typeof productCreateSchema>;

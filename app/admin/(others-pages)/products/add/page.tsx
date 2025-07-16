@@ -441,6 +441,21 @@ export default function AddProductPage() {
                   </p>
                 )}
               </div>
+              <div className="flex flex-col">
+                <Label htmlFor="initialStock">Initial Stock</Label>
+                <Input
+                  id="initialStock"
+                  type="number"
+                  {...register("initialStock", { valueAsNumber: true })}
+                  placeholder="0"
+                  className={errors.initialStock ? "border-red-500" : ""}
+                />
+                {errors.initialStock && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.initialStock.message}
+                  </p>
+                )}
+              </div>
             </div>
           </ComponentCard>
         </div>

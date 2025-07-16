@@ -7,6 +7,7 @@ import AdminTable, {
 } from "@/components/admin/common/AdminTable";
 import { Dropdown } from "@/components/admin/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/admin/ui/dropdown/DropdownItem";
+import PageBreadcrumb from "@/components/admin/common/PageBreadCrumb";
 
 const UsersPage = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -69,20 +70,21 @@ const UsersPage = () => {
     },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
-    { header: "Role", render: (row) => row.roles?.name || row.roles },
+    {
+      header: "Role",
+      render: (row) =>
+        typeof row.roles === "object" && row.roles?.name
+          ? row.roles.name
+          : typeof row.roles === "string"
+          ? row.roles
+          : "user",
+    },
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Users</h2>
-        <button
-          onClick={() => router.push("/admin/users/add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Add User
-        </button>
-      </div>
+    <div className="p-6">
+      <PageBreadcrumb pageTitle="Roles & Permissions" />
+
       {error && <div className="text-red-600 mb-2">{error}</div>}
       <AdminTable
         columns={columns}

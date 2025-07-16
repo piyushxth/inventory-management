@@ -10,7 +10,7 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function StatisticsChart() {
+export default function StatisticsChart({ data }: { data: any[] }) {
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -109,16 +109,23 @@ export default function StatisticsChart() {
     },
   };
 
+  // If data is an array of objects with totalSales, use that for the Sales series
+  // Optionally, if you want to support multiple series, adjust here
+  const salesSeries = Array(12).fill(0);
+  data.forEach((item: any) => {
+    if (item._id && item._id.month && typeof item.totalSales === "number") {
+      salesSeries[item._id.month - 1] = item.totalSales;
+    }
+  });
+
   const series = [
     {
       name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      data: salesSeries,
     },
-    {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
+    // You can add more series here if your data supports it
   ];
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">

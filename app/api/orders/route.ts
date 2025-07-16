@@ -3,11 +3,16 @@ import connectMongoDB from "../../../libs/connnectMongoDB";
 import { Order } from "../../../libs/models/order";
 import { Product } from "../../../libs/models/product";
 import { StockMovement } from "../../../libs/models/stockMovement";
+import { Notification } from "@/libs/models/notification";
+import { Document } from "mongoose";
+import { AdminLog } from "@/libs/models/adminLog";
+import { getToken } from "next-auth/jwt";
 
 export async function POST(req: NextRequest) {
   try {
     const orderData = await req.json();
     await connectMongoDB();
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     // Check stock for each product
     for (const item of orderData.items) {
@@ -53,10 +58,39 @@ export async function POST(req: NextRequest) {
       });
     }
     // Create the order
-    let savedOrder;
+    let savedOrder: typeof Order extends { prototype: infer T }
+      ? T & Document
+      : Document;
     try {
       const newOrder = new Order(orderData);
       savedOrder = await newOrder.save();
+      // Create a notification for admins
+      await Notification.create({
+        type: "order",
+        message: `New order placed by ${
+          orderData.customerName || "a customer"
+        }`,
+        entity: "order",
+        entityId: savedOrder._id?.toString(),
+        recipient: "admin",
+        read: false,
+        createdAt: new Date(),
+        meta: { orderId: savedOrder._id?.toString() },
+      });
+      // Log admin action
+      if (token && token.role === "admin") {
+        try {
+          await AdminLog.create({
+            admin: token.id,
+            action: "create",
+            entity: "order",
+            entityId: savedOrder._id,
+            details: { ...orderData },
+          });
+        } catch (logErr) {
+          console.error("Failed to log admin action (order create):", logErr);
+        }
+      }
     } catch (err) {
       // Rollback soldQuantity and availableQuantity if order creation fails
       for (const { product, quantity } of updatedProducts) {
@@ -91,7 +125,9 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     await connectMongoDB();
-    const orders = await Order.find();
+    const orders = await Order.find()
+      .populate("items.product", "name images")
+      .sort({ createdDate: -1 });
     return NextResponse.json({ success: true, data: orders }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
@@ -111,7 +147,22 @@ export async function DELETE(req: NextRequest) {
       );
     }
     await connectMongoDB();
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const result = await Order.deleteMany({ _id: { $in: ids } });
+    // Log admin action
+    if (token && token.role === "admin") {
+      try {
+        await AdminLog.create({
+          admin: token.id,
+          action: "delete",
+          entity: "order",
+          entityId: ids,
+          details: { count: result.deletedCount },
+        });
+      } catch (logErr) {
+        console.error("Failed to log admin action (order delete):", logErr);
+      }
+    }
     return NextResponse.json(
       {
         success: true,

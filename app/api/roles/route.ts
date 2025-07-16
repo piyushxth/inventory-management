@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "../../../libs/connnectMongoDB";
 import Roles from "../../../libs/models/roles";
+import { User } from "../../../libs/models/users";
 
 // POST: Create a new role
 export async function POST(req: NextRequest) {
@@ -48,19 +49,33 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: Fetch all roles
-export async function GET() {
+// GET: Fetch all roles with user counts and user lists
+export async function GET(req: NextRequest) {
   try {
-    // Connect to MongoDB
     await connectMongoDB();
-
-    // Fetch all roles from the database
     const roles = await Roles.find();
-    return NextResponse.json({ success: true, data: roles }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching roles:", error);
+    // For each role, count and list users
+    const rolesWithUsers = await Promise.all(
+      roles.map(async (role) => {
+        const users = await User.find({ roles: role._id }).select(
+          "_id name email profilePicture"
+        );
+        return {
+          _id: role._id,
+          name: role.name,
+          userCount: users.length,
+          users,
+        };
+      })
+    );
     return NextResponse.json(
-      { success: false, message: "Failed to fetch roles" },
+      { success: true, data: rolesWithUsers },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching roles with users:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch roles with users" },
       { status: 500 }
     );
   }

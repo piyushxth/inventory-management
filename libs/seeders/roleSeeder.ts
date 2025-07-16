@@ -7,13 +7,13 @@ export async function seedRole() {
     await Roles.deleteMany({});
     console.log("🗑️ All existing roles deleted.");
 
-    const roleData = {
-      name: "admin",
-    };
+    const rolesData = [{ name: "admin" }, { name: "user" }];
 
-    const newRole = new Roles(roleData);
-    await newRole.save();
-    console.log(`✅ Seeded role: ${roleData.name}`);
+    for (const roleData of rolesData) {
+      const newRole = new Roles(roleData);
+      await newRole.save();
+      console.log(`✅ Seeded role: ${roleData.name}`);
+    }
     console.log("🎉 Role seeding completed.");
   } catch (err) {
     console.error("❌ Error during role seeding:", err);

@@ -1,23 +1,21 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100..900&display=swap");
 
-@font-face {
+/* @font-face {
   font-family: "FashionWacks";
   src: url("/fonts/FashionWacks-Regular.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-}
+} */
 
 :root {
   /* Colors */
   --background: #d9d9d9;
   --foreground: #232323;
 
-  --bg-accent-300: #d9d9d9;
-  --bg-accent-400: #a0ba9a;
-  --bg-accent-500: #c5c5c5;
-  --text-primary-300: #232323;
+  --bg-primary: #e6ff5b;
+
+  --primary: #e6ff5b;
 
   --fw-regular: 400;
   --fw-medium: 500;
@@ -25,19 +23,24 @@
   --fw-bold: 700;
   --fw-extrabold: 800;
 
-    /* Font Families */
-    --ff-poppins: "Poppins", sans-serif;
-    --ff-fashionwacks: "FashionWacks", sans-serif;
+  /* Font Families */
+  --ff-poppins: "Poppins", sans-serif;
+  /* --ff-fashionwacks: "FashionWacks", sans-serif; */
 
- /* Font Sizes (in rem units) */
- --fs-300: 0.938rem;
- --fs-400: 1rem;
- --fs-600: 3.125rem;
- --fs-900: clamp(50px, 18vw, 14rem);
+  /* Font Sizes (in rem units) */
+  --fs-100: 0.75rem; /* 12px */
+  --fs-200: 0.875rem; /* 14px */
+  --fs-300: 1rem; /* 16px */
+  --fs-400: 1.25rem; /* 20px */
+  --fs-500: 1.75rem; /* 28px */
+  --fs-600: 2.5rem; /* 40px */
+  --fs-700: 2.75rem; /* 44px */
+  --fs-800: 3.5rem; /* 56px */
+  --fs-900: 5rem; /* 80px */
 
- /* Semantic Font Sizes */
- --fs-body: var(--fs-300);
- --fs-nav: var(--fs-300);
+  /* Semantic Font Sizes */
+  --fs-body: var(--fs-300);
+  --fs-nav: var(--fs-300);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,14 +50,17 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-size: var(--fs-body);
-}
-
-section{
-  padding-block: 1rem;
+  margin: 0;
+  padding: 0;
+  line-height: 16.8px;
 }
 
 img {
@@ -92,29 +98,17 @@ img {
 /* Utility Classes */
 .container {
   margin-inline: auto;
-  width: min(90%, 70.5rem);
-}
-/* Colors Utilities */
-.bg-accent-300 {
-  background-color: var(--bg-accent-300);
-}
-.bg-accent-400 {
-  background-color: var(--bg-accent-400);
-}
-.bg-accent-500 {
-  background-color: var(--bg-accent-500);
-}
-.text-primary-300 {
-  color: var(--text-primary-300);
+  padding: 16px;
 }
 
+/* Colors Utilities */
+.bg-primary {
+  background-color: var(--bg-primary);
+}
 
 /*Font Family Utilities */
 .ff-poppins {
   font-family: var(--ff-poppins);
-}
-.ff-fashionwacks {
-  font-family: var(--ff-fashionwacks);
 }
 
 .fw-regular {
@@ -140,14 +134,29 @@ img {
 .fs-nav {
   font-size: var(--fs-nav);
 }
+.fs-100 {
+  font-size: var(--fs-100);
+}
+.fs-200 {
+  font-size: var(--fs-200);
+}
 .fs-300 {
   font-size: var(--fs-300);
 }
 .fs-400 {
   font-size: var(--fs-400);
 }
+.fs-500 {
+  font-size: var(--fs-500);
+}
 .fs-600 {
   font-size: var(--fs-600);
+}
+.fs-700 {
+  font-size: var(--fs-700);
+}
+.fs-800 {
+  font-size: var(--fs-800);
 }
 .fs-900 {
   font-size: var(--fs-900);

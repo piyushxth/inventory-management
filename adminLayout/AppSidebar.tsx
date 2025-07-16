@@ -17,6 +17,7 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  DocsIcon,
 } from "../adminIcons/index";
 
 import GridIcon from "../adminIcons/grid.svg";
@@ -89,6 +90,16 @@ const navItems: NavItem[] = [
     name: "Inventory",
     icon: <BoxCubeIcon />,
     subItems: [{ name: "Stock Movements", path: "/admin/stock-movements" }],
+  },
+  {
+    name: "Logs",
+    icon: <DocsIcon />,
+    path: "/admin/logs",
+  },
+  {
+    name: "Monthly Target",
+    icon: <PieChartIcon />, // Or any icon you prefer
+    path: "/admin/target",
   },
 ];
 
@@ -341,17 +352,19 @@ const AppSidebar: React.FC = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
-                className="dark:hidden"
+                className="dark:hidden w-[150px] h-auto"
                 src="/images/logo/logo.svg"
                 alt="Logo"
-                width={150}
+                width={160}
                 height={40}
+                priority
               />
               <Image
-                className="hidden dark:block"
+                className="hidden dark:block w-[150px] h-auto"
                 src="/images/logo/logo-dark.svg"
+                style={{ width: "150px", height: "auto" }}
                 alt="Logo"
-                width={150}
+                width={160}
                 height={40}
               />
             </>

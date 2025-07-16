@@ -13,5 +13,11 @@ export const UserUpdateSchema = UserCreateSchema.partial().extend({
   password: z.string().min(6).optional(),
 });
 
+export const UserLoginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
 export type TUserCreate = z.infer<typeof UserCreateSchema>;
 export type TUserUpdate = z.infer<typeof UserUpdateSchema>;
+export type TUserLogin = z.infer<typeof UserLoginSchema>;

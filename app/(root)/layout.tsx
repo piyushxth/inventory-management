@@ -5,6 +5,7 @@ import Navbar from "@/components/client/Navbar";
 import Navheader from "@/components/client/Navheader";
 import Navbody from "@/components/client/Navbody";
 import StickyTest from "@/components/client/demo";
+import Footer from "@/components/client/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
           <Navbar />
           {children}
         </div>
+        <Footer />
       </body>
     </html>
   );

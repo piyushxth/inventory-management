@@ -12,7 +12,7 @@ const Collections = () => {
       <div
         className="
         relative
-    flex-1 border 
+    flex-1 
     basis-full 
     w-0 
     [aspect-ratio:375/500]
@@ -26,7 +26,7 @@ const Collections = () => {
   "
       >
         <Image
-          src={"/client/collections/collection1.webp"}
+          src={"/client/collections/product-1.jpg"}
           alt="A man and woman wearing Volt crossbody's"
           fill
           className="object-cover object-[59.33%_17.25%]"
@@ -96,7 +96,7 @@ const Collections = () => {
       <div
         className="
         relative
-    flex-1 border 
+    flex-1 
     basis-full 
     w-0 
     [aspect-ratio:375/500]
@@ -110,7 +110,7 @@ const Collections = () => {
   "
       >
         <Image
-          src={"/client/collections/collection2.webp"}
+          src={"/client/collections/product-2.jpg"}
           alt="A man and woman wearing Volt crossbody's"
           fill
           className="object-cover object-[59.33%_17.25%]"
@@ -180,7 +180,7 @@ const Collections = () => {
       <div
         className="
         relative
-    flex-1 border 
+    flex-1 
     basis-full 
     w-0 
     [aspect-ratio:375/500]
@@ -194,7 +194,7 @@ const Collections = () => {
   "
       >
         <Image
-          src={"/client/collections/collection3.webp"}
+          src={"/client/collections/product4.jpg"}
           alt="A man and woman wearing Volt crossbody's"
           fill
           className="object-cover object-[59.33%_17.25%]"

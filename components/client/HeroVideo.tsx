@@ -1,6 +1,10 @@
 import React from "react";
 
 const HeroVideo = () => {
+  const mobileOverlay =
+    "linear-gradient(61.56deg, rgba(0,0,0,0.18), rgba(0,0,0,0) 74.72%)";
+  const desktopOverlay =
+    "linear-gradient(360deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 34.19%), linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 13.36%)";
   return (
     <div
       className="  relative overflow-hidden will-change-transform
@@ -16,12 +20,12 @@ const HeroVideo = () => {
         poster="/client/hero-poster.webp"
       >
         <source
-          src="/hero-video1.mp4"
+          src="/client/product/tees.mov"
           type="video/mp4"
           media="(max-width: 767px)"
         />
         <source
-          src="/hero-video2.mp4"
+          src="/client/product/tees.mov"
           type="video/mp4"
           media="(min-width: 768px)"
         />

@@ -18,7 +18,7 @@ const Hero = () => {
         `}
       >
         <Image
-          src="/client/hero/a.webp"
+          src="/client/hero/hero.png"
           alt="A man and woman wearing Volt crossbody's"
           fill
           priority
@@ -34,14 +34,7 @@ const Hero = () => {
             z-10
           `}
           style={{
-            background:
-              // Use desktop overlay on large screens, mobile overlay otherwise
-              // This is a CSS trick: two backgrounds, one hidden by media query
-              // But in React, we can use window.innerWidth or just let CSS handle it
-              // For best performance, use both and let CSS media queries override
-              // Here, we use mobile as default, desktop as override
-              // You can also use a custom CSS class if you want
-              `${mobileOverlay}`,
+            background: `${mobileOverlay}`,
           }}
         >
           {/* Desktop overlay via extra div for best compatibility */}

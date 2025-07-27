@@ -80,6 +80,7 @@ const MediaCard = () => {
                   priority={false} // change to true if it's above the fold
                 />
               </div>
+              
             </div>
           ))}
         </div>

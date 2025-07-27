@@ -4,12 +4,13 @@ import Link from "next/link";
 import React, { useEffect } from "react";
 import Swiper from "swiper";
 import { Navigation } from "swiper/modules";
+import ProductCard from "./ProductCard";
 
 const images = [
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
+  "/client/product/f1.jpg",
+  "/client/product/f2.jpg",
+  "/client/product/f3.jpg",
+  "/client/product/f4.jpg",
   "/client/product/product1.webp",
 ];
 
@@ -67,47 +68,13 @@ const BestSelling = () => {
               key={index}
               className="swiper-slide basis-[250px] lg:basis-[360px] flex-none w-[220px] snap-start "
             >
-              <div className="bg-[#f5f5f5] border border-[#f5f5f5] rounded-[2px]">
-                <Link href={"/shop"}>
-                  <div className="relative p-4 h-[46px] flex flex-start justify-between gap-[8px 4px]">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="py-[3px] px-[6px]  text-black fw-regular text-xs uppercase border">
-                        Best Seller
-                      </span>
-                    </div>
-                  </div>
-                  <div className="relative aspect-[1/1] ">
-                    <Image
-                      src={image}
-                      alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                      width={960}
-                      height={1200}
-                      sizes="(min-width: 1100px) 410px, 250px"
-                      className=" h-full w-full object-cover"
-                      priority={false} // change to true if it's above the fold
-                    />
-                  </div>
-                  <div className="flex gap-2 p-4 flex-col">
-                    <div className="flex flex-wrap items-center text-xs">
-                      asdf
-                    </div>
-                    <div className="flex flex-wrap gap-[4px 8px] flex-1 flex-start items-center">
-                      <h3 className="text-[22px] fw-bold">
-                        Hybrid Backpack 30L
-                      </h3>
-                      <h4 className="text-balance text-[14px] ">
-                        <span>Rs37,400</span>
-                      </h4>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+              <ProductCard image={image} index={index} />
             </li>
           ))}
         </ul>
 
-        <div className="absolute top-1/2 left-2 transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 best-selling-prev !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
+        <div className=" absolute top-1/2 left-2 transform -translate-y-1/2 z-50">
+          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-prev !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"
@@ -125,8 +92,8 @@ const BestSelling = () => {
             </div>
           </button>
         </div>
-        <div className="absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 best-selling-next !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
+        <div className=" absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
+          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-next !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"

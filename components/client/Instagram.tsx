@@ -1,7 +1,34 @@
+"use client";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+interface InstagramPost {
+  id: string;
+  caption?: string;
+  media_type: string;
+  media_url: string;
+  permalink: string;
+}
 
 const Instagram = () => {
+  const [posts, setPosts] = useState<InstagramPost[]>([]);
+
+  useEffect(() => {
+    async function getInstagramData() {
+      try {
+        const res = await fetch(
+          `https://graph.instagram.com/me/media?fields=id,media_url,permalink&access_token=IGAAnZBIAD4guVBZAFE5VS1yTElVZAmtiTVB4WWprWHRXZAmJoZAWtNWTJZAU3lpR1ZA1ZAmMtWTluaWhEbmtncjBpTXdVQklQZAnVUY2NFYnNmSWpVYURrMTAzOExaQWxkdEdQMnFna3NpVlJ3WDUyazdZAQkdmSnVCVTloMzQtcUVDWUdodwZDZD`
+        );
+        const data = await res.json();
+        console.log("Instagram Data:", data);
+        setPosts(data.data); // save data into state
+      } catch (error) {
+        console.error("Error fetching Instagram data:", error);
+      }
+    }
+
+    getInstagramData(); // call once when component mounts
+  }, []);
   return (
     <>
       <section className="mx-auto  px-[16px] md:px-[16px] py-[22px] lg:px-[40px]  overflow-hidden">
@@ -109,6 +136,41 @@ const Instagram = () => {
               />
             </figure>
           </li>
+        </ul>
+      </section>
+      <section>
+        <ul className="flex overflow-hidden">
+          {posts.map((post) => (
+            <li
+              key={post.id}
+              className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] "
+            >
+              <a
+                href={post.permalink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <figure className="relative flex w-full">
+                  <Image
+                    src={post.media_url}
+                    alt="Instagram post"
+                    width={960}
+                    sizes="(min-width: 1100px) 410px, 250px"
+                    priority={false} // change to true if it's above the fold
+                    height={1200}
+                    className="h-full w-full object-cover"
+                  />
+                </figure>
+                <Image
+                  src={post.media_url}
+                  alt="Instagram post"
+                  width={960}
+                  height={1200}
+                  className="h-full w-full object-cover"
+                />
+              </a>
+            </li>
+          ))}
         </ul>
       </section>
     </>

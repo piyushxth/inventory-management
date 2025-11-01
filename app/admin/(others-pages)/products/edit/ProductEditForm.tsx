@@ -24,9 +24,11 @@ interface Category {
 }
 
 // Temporary schema for form validation (without image requirement)
-const formValidationSchema = productCreateSchema.omit({ images: true }).extend({
-  images: z.array(z.string()).optional(),
-});
+const formValidationSchema = productCreateSchema
+  .omit({ mainImage: true })
+  .extend({
+    mainImage: z.array(z.string()).optional(),
+  });
 
 type FormData = z.infer<typeof formValidationSchema>;
 
@@ -182,7 +184,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
-    product.images || []
+    product.mainImage || []
   );
   const [newImages, setNewImages] = useState<File[]>([]);
 
@@ -208,7 +210,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
           ? product.variants
           : [{ size: "", color: "", quantity: 0, sku: "" }],
       // Ensure we have images array
-      images: product.images || [],
+      images: product.mainImage || [],
     },
   });
 
@@ -234,7 +236,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
 
   // Update form images when existingImages changes
   useEffect(() => {
-    setValue("images", existingImages);
+    setValue("mainImage", existingImages);
   }, [existingImages, setValue]);
 
   const onSubmit = async (data: FormData) => {
@@ -272,7 +274,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
 
       const finalData: TProductCreate = {
         ...data,
-        images: finalImageUrls,
+        mainImage: finalImageUrls,
       };
 
       console.log("Final data", finalData);
@@ -389,30 +391,30 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
                 id="cost_price"
                 type="number"
                 step="0.01"
-                {...register("cost_price", { valueAsNumber: true })}
+                {...register("costPrice", { valueAsNumber: true })}
                 placeholder="0.00"
-                className={errors.cost_price ? "border-red-500" : ""}
+                className={errors.costPrice ? "border-red-500" : ""}
               />
-              {errors.cost_price && (
+              {errors.costPrice && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.cost_price.message}
+                  {errors.costPrice.message}
                 </p>
               )}
             </div>
 
             <div className="flex flex-col">
-              <Label htmlFor="selling_price">Selling Price</Label>
+              <Label htmlFor="basePrice">Selling Price</Label>
               <Input
-                id="selling_price"
+                id="basePrice"
                 type="number"
                 step="0.01"
-                {...register("selling_price", { valueAsNumber: true })}
+                {...register("basePrice", { valueAsNumber: true })}
                 placeholder="0.00"
-                className={errors.selling_price ? "border-red-500" : ""}
+                className={errors.basePrice ? "border-red-500" : ""}
               />
-              {errors.selling_price && (
+              {errors.basePrice && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.selling_price.message}
+                  {errors.basePrice.message}
                 </p>
               )}
             </div>
@@ -433,17 +435,17 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
               )}
             </div>
             <div className="flex flex-col">
-              <Label htmlFor="initialStock">Initial Stock</Label>
+              <Label htmlFor="totalStock">Initial Stock</Label>
               <Input
-                id="initialStock"
+                id="totalStock"
                 type="number"
-                {...register("initialStock", { valueAsNumber: true })}
+                {...register("totalStock", { valueAsNumber: true })}
                 placeholder="0"
-                className={errors.initialStock ? "border-red-500" : ""}
+                className={errors.totalStock ? "border-red-500" : ""}
               />
-              {errors.initialStock && (
+              {errors.totalStock && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.initialStock.message}
+                  {errors.totalStock.message}
                 </p>
               )}
             </div>
@@ -461,7 +463,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
               newImages={newImages}
               onNewImagesChange={setNewImages}
               onExistingImagesChange={setExistingImages}
-              errors={errors.images}
+              errors={errors.mainImage}
             />
           </div>
         </div>
@@ -526,10 +528,12 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label htmlFor={`variants.${index}.quantity`}>Quantity</Label>
+                  <Label htmlFor={`variants.${index}.totalStock`}>
+                    Quantity
+                  </Label>
                   <Input
                     type="number"
-                    {...register(`variants.${index}.quantity`, {
+                    {...register(`variants.${index}.totalStock`, {
                       valueAsNumber: true,
                     })}
                     placeholder="0"

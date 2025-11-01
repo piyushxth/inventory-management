@@ -1,35 +1,14 @@
-"use client";
 import Features from "@/components/client/Features";
 import Instagram from "@/components/client/Instagram";
 import ProductCard from "@/components/client/ProductCard";
+import { getProducts } from "@/libs/actions/productAction";
+import { IProduct } from "@/libs/models/product";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-const images = [
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-  "/client/product/product1.webp",
-];
-
-const page = () => {
+async function page() {
+  const products = await getProducts();
   // Gradients for overlays
   const mobileOverlay =
     "linear-gradient(61.56deg, rgba(0,0,0,0.18), rgba(0,0,0,0) 74.72%)";
@@ -136,12 +115,12 @@ const page = () => {
       </section>
       <section className="relative mx-auto px-4 lg:px-10 lg:pb-12 w-full">
         <ul className="flex flex-wrap gap-2 lg:gap-y-8 lg:gap-x-2">
-          {images.map((image, index) => (
+          {products.map((product: IProduct) => (
             <li
-              key={index}
+              key={product._id.toString()} // convert to string for React key
               className="flex-none basis-[calc((100%-8px)/2)] lg:basis-[calc((100%-24px)/4)] snap-start"
             >
-              <ProductCard image={image} index={index} />
+              <ProductCard product={product} />
             </li>
           ))}
         </ul>
@@ -150,6 +129,6 @@ const page = () => {
       <Instagram />
     </section>
   );
-};
+}
 
 export default page;

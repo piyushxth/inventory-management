@@ -80,13 +80,12 @@ const MediaCard = () => {
                   priority={false} // change to true if it's above the fold
                 />
               </div>
-              
             </div>
           ))}
         </div>
 
         <div className="absolute top-1/2 left-2  transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 media-card-prev !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
+          <button className="border border-white rounded-[4px] p-4 media-card-prev !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"
@@ -105,7 +104,7 @@ const MediaCard = () => {
           </button>
         </div>
         <div className="absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 media-card-next !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
+          <button className="border border-white rounded-[4px] p-4 media-card-next !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl  flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"

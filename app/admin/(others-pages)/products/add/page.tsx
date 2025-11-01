@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,8 +19,8 @@ import PageBreadcrumb from "@/components/admin/common/PageBreadCrumb";
 import { Modal } from "@/components/admin/ui/modal";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
-import { z } from "zod";
 import { z as zodZ } from "zod";
+import { VariantFields } from "@/components/client/VariantFields";
 
 interface Category {
   _id: string;
@@ -33,12 +33,8 @@ interface CategoryFormData {
   description: string;
 }
 
-// Temporary schema for form validation (without image requirement)
-const formValidationSchema = productCreateSchema.omit({ images: true }).extend({
-  images: z.array(z.string()).optional(),
-});
 
-type FormData = zodZ.infer<typeof formValidationSchema>;
+type FormData = zodZ.infer<typeof productCreateSchema>;
 
 // Custom Dropzone Component
 const ImageDropzone: React.FC<{
@@ -133,31 +129,53 @@ const ImageDropzone: React.FC<{
 };
 
 export default function AddProductPage() {
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    watch,
-  } = useForm<FormData>({
-    resolver: zodResolver(formValidationSchema),
-    defaultValues: {
-      images: [],
-      variants: [{ size: "", color: "", quantity: 0, sku: "" }],
-    },
-  });
+const {
+  register,
+  control,
+  handleSubmit,
+  formState: { errors, isSubmitting },
+  setValue,
+  watch,
+} = useForm<FormData>({
+  resolver: zodResolver(productCreateSchema),
+  defaultValues: {
+    name: "",
+    description: "",
+    category: "",
+    costPrice: 0,
+    basePrice: 0,
+    mainImage: [],
+    tags: [],
+    variants: [
+      {
+        color: "",
+        images: [],
+        options: [{ size: "", price: 0, quantity: 0, sku: "" }],
+      },
+    ],
+    availableQuantity: 0,
+    soldQuantity: 0,
+  },
+});
+ 
+  // For variants
+const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
+  control,
+  name: "variants",
+});
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "variants",
-  });
+// Sync with form
+useEffect(() => {
+  // Convert file objects to URLs or filenames if you’re uploading later
+  setValue("mainImage", selectedImages.map(file => file.name));
+}, [selectedImages, setValue]);
 
   // Category form
   const {
@@ -184,6 +202,8 @@ export default function AddProductPage() {
     fetchCategories();
   }, []);
 
+ 
+
   const mutation = useMutation({
     mutationFn: async (data: TProductCreate) => {
       setIsLoading(true);
@@ -194,22 +214,37 @@ export default function AddProductPage() {
         setIsLoading(false);
       }
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log("Product created successfully:", response.data);
       alert("Product created successfully!");
       // Reset form
       setValue("name", "");
       setValue("description", "");
       setValue("category", "");
-      setValue("cost_price", 0);
-      setValue("selling_price", 0);
+      setValue("costPrice", 0);
+      setValue("basePrice", 0);
+      setValue("soldQuantity", 0);
       setValue("availableQuantity", 0);
-      setValue("images", []);
-      setValue("variants", [{ size: "", color: "", quantity: 0, sku: "" }]);
+      setValue("mainImage", []);
+      setValue("variants", [
+        {
+          color: "",
+          colorHex: "",
+          images: [],
+          options: [
+            { size: "", price: 0, quantity: 0, sku: "" },
+          ],
+        },
+      ]);
       setSelectedImages([]);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating product:", error);
-      alert("Failed to create product. Please try again.");
+      if (error.response?.data?.message) {
+        alert(`Failed to create product: ${error.response.data.message}`);
+      } else {
+        alert("Failed to create product. Please try again.");
+      }
     },
   });
 
@@ -242,66 +277,160 @@ export default function AddProductPage() {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      console.log("data", data);
-      let uploadedImageUrls: string[] = [];
-
-      if (selectedImages.length > 0) {
-        const formData = new FormData();
-        formData.append("entityType", "products");
-
-        // Append each image file
-        selectedImages.forEach((image, index) => {
-          formData.append("gallery", image);
-        });
-
-        const uploadRes = await fetch("/api/upload-demo", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) throw new Error("Image upload failed");
-
-        const uploadResult = await uploadRes.json();
-        uploadedImageUrls = uploadResult.files?.gallery || [];
-
-        const finalData: TProductCreate = {
-          ...data,
-          images: uploadedImageUrls,
-        };
-
-        console.log("Final data", finalData);
-        const result = productCreateSchema.safeParse(finalData);
-        if (result.success) {
-          mutation.mutate(finalData);
-        } else {
-          console.error("Validation errors:", result.error);
-          alert("Please check the form data and try again.");
+const onSubmit = async (data: FormData) => {
+  try {
+    console.log("Form data before validation:", data);
+    
+    // Basic field validations
+    if (!data.name || data.name.trim() === "") {
+      alert("Product name is required.");
+      return;
+    }
+    
+    if (!data.description || data.description.trim() === "") {
+      alert("Product description is required.");
+      return;
+    }
+    
+    if (!data.category || data.category.trim() === "") {
+      alert("Product category is required.");
+      return;
+    }
+    
+    if (data.costPrice < 0) {
+      alert("Cost price must be zero or positive.");
+      return;
+    }
+    
+    if (data.basePrice < 0) {
+      alert("Base price must be zero or positive.");
+      return;
+    }
+    
+    // Validate variants explicitly
+    if (!data.variants || data.variants.length === 0) {
+      alert("At least one variant is required.");
+      return;
+    }
+    
+    // Validate each variant
+    for (let i = 0; i < data.variants.length; i++) {
+      const variant = data.variants[i];
+      if (!variant.color || variant.color.trim() === "") {
+        alert(`Variant ${i + 1}: Color is required.`);
+        return;
+      }
+      
+      if (!variant.options || variant.options.length === 0) {
+        alert(`Variant ${i + 1}: At least one size option is required.`);
+        return;
+      }
+      
+      // Validate each option in the variant
+      for (let j = 0; j < variant.options.length; j++) {
+        const option = variant.options[j];
+        if (!option.size || option.size.trim() === "") {
+          alert(`Variant ${i + 1}, Option ${j + 1}: Size is required.`);
+          return;
         }
-      } else {
-        // If no images selected, show error
+        
+        if (option.price < 0) {
+          alert(`Variant ${i + 1}, Option ${j + 1}: Price must be zero or positive.`);
+          return;
+        }
+        
+        if (option.quantity < 0) {
+          alert(`Variant ${i + 1}, Option ${j + 1}: Quantity must be zero or positive.`);
+          return;
+        }
+        
+        if (!option.sku || option.sku.trim() === "") {
+          alert(`Variant ${i + 1}, Option ${j + 1}: SKU is required.`);
+          return;
+        }
+      }
+    }
+    
+    // First, validate the form data without images
+    const formDataWithoutImages = {
+      ...data,
+      mainImage: selectedImages.length > 0 ? ["temp"] : [] // Temporary value for validation
+    };
+    
+    const preValidationResult = productCreateSchema.safeParse(formDataWithoutImages);
+    if (!preValidationResult.success) {
+      console.error("Pre-validation errors:", preValidationResult.error);
+      
+      // Check if the error is related to images
+      const imageErrors = preValidationResult.error.issues.filter(issue => 
+        issue.path.includes("mainImage")
+      );
+      
+      if (imageErrors.length > 0 && selectedImages.length === 0) {
         alert("Please select at least one image for the product.");
         return;
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Failed to upload images. Please try again.");
+      
+      alert("Please check the form data and try again.");
+      return;
     }
-  };
+    
+    // If we get here, the form data is valid except for images
+    // Now handle image upload
+    if (selectedImages.length === 0) {
+      alert("Please select at least one image for the product.");
+      return;
+    }
+    
+    let uploadedImageUrls: string[] = [];
+    const formData = new FormData();
+    formData.append("entityType", "products");
+
+    // Append each image file
+    selectedImages.forEach((image) => {
+      formData.append("gallery", image);
+    });
+
+    const uploadRes = await fetch("/api/upload-demo", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadRes.ok) throw new Error("Image upload failed");
+
+    const uploadResult = await uploadRes.json();
+    uploadedImageUrls = uploadResult.files?.gallery || [];
+
+    // Create final data with uploaded images
+    const finalData: TProductCreate = {
+      ...data,
+      mainImage: uploadedImageUrls,
+    };
+
+    console.log("Final data with uploaded images:", finalData);
+    
+    // Validate the final data
+    const finalValidationResult = productCreateSchema.safeParse(finalData);
+    if (!finalValidationResult.success) {
+      console.error("Final validation errors:", finalValidationResult.error);
+      alert("Please check the form data and try again.");
+      return;
+    }
+
+    // Submit the validated data
+    mutation.mutate(finalData);
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("Failed to create product. Please try again.");
+  }
+};
+
 
   const onSubmitCategory = (data: CategoryFormData) => {
     categoryMutation.mutate(data);
   };
 
-  const addVariant = () => {
-    append({
-      size: "",
-      color: "",
-      quantity: 0,
-      sku: "",
-    });
-  };
+
 
   // Convert categories to options format for Select component
   const categoryOptions = categories.map((category) => ({
@@ -313,7 +442,12 @@ export default function AddProductPage() {
     <div className="p-6">
       <PageBreadcrumb pageTitle="Add Product" />
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-10"
+        onSubmit={handleSubmit(onSubmit, (err) =>
+          console.log("Validation errors:", err)
+        )}
+      >
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Product Details */}
           <ComponentCard title="Product Details">
@@ -393,35 +527,52 @@ export default function AddProductPage() {
           <ComponentCard title="Pricing">
             <div className="space-y-4">
               <div className="flex flex-col">
-                <Label htmlFor="cost_price">Cost Price</Label>
+                <Label htmlFor="costPrice">Cost Price</Label>
                 <Input
-                  id="cost_price"
+                  id="costPrice"
                   type="number"
                   step="0.01"
-                  {...register("cost_price", { valueAsNumber: true })}
+                  {...register("costPrice", { valueAsNumber: true })}
                   placeholder="0.00"
-                  className={errors.cost_price ? "border-red-500" : ""}
+                  className={errors.costPrice ? "border-red-500" : ""}
                 />
-                {errors.cost_price && (
+                {errors.costPrice && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.cost_price.message}
+                    {errors.costPrice.message}
                   </p>
                 )}
               </div>
 
               <div className="flex flex-col">
-                <Label htmlFor="selling_price">Selling Price</Label>
+                <Label htmlFor="basePrice">Selling Price</Label>
                 <Input
-                  id="selling_price"
+                  id="basePrice"
                   type="number"
                   step="0.01"
-                  {...register("selling_price", { valueAsNumber: true })}
+                  {...register("basePrice", { valueAsNumber: true })}
                   placeholder="0.00"
-                  className={errors.selling_price ? "border-red-500" : ""}
+                  className={errors.basePrice ? "border-red-500" : ""}
                 />
-                {errors.selling_price && (
+                {errors.basePrice && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.selling_price.message}
+                    {errors.basePrice.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <Label htmlFor="soldQuantity">Sold Quantity</Label>
+                <Input
+                  id="soldQuantity"
+                  type="number"
+                  step="1"
+                  {...register("soldQuantity", { valueAsNumber: true })}
+                  placeholder="0"
+                  className={errors.soldQuantity ? "border-red-500" : ""}
+                />
+                {errors.soldQuantity && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.soldQuantity.message}
                   </p>
                 )}
               </div>
@@ -431,6 +582,7 @@ export default function AddProductPage() {
                 <Input
                   id="availableQuantity"
                   type="number"
+                  step="1"
                   {...register("availableQuantity", { valueAsNumber: true })}
                   placeholder="0"
                   className={errors.availableQuantity ? "border-red-500" : ""}
@@ -441,34 +593,19 @@ export default function AddProductPage() {
                   </p>
                 )}
               </div>
-              <div className="flex flex-col">
-                <Label htmlFor="initialStock">Initial Stock</Label>
-                <Input
-                  id="initialStock"
-                  type="number"
-                  {...register("initialStock", { valueAsNumber: true })}
-                  placeholder="0"
-                  className={errors.initialStock ? "border-red-500" : ""}
-                />
-                {errors.initialStock && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.initialStock.message}
-                  </p>
-                )}
-              </div>
             </div>
           </ComponentCard>
         </div>
 
         {/* Images */}
         <ComponentCard title="Product Images">
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <Label>Product Images</Label>
               <ImageDropzone
                 images={selectedImages}
                 onImagesChange={setSelectedImages}
-                errors={errors.images}
+                errors={errors.mainImage}
               />
             </div>
           </div>
@@ -476,104 +613,53 @@ export default function AddProductPage() {
 
         {/* Variants */}
         <ComponentCard title="Product Variants">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label>Variants</Label>
-              <Button
-                onClick={addVariant}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Add Variant
-              </Button>
-            </div>
-
-            {fields.map((field, index) => (
-              <div key={field.id} className="border p-4 rounded-lg space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium">Variant {index + 1}</h4>
-                  <Button
-                    onClick={() => remove(index)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+          <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="category">Variant</Label>
+                  <button
+                    type="button"
+                     onClick={() =>
+          appendVariant({
+            color: "",
+            colorHex: "",
+            
+            images: [],
+            options: [{ size: "", price: 0, quantity: 0, sku: "" }],
+          })
+        }
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                   >
-                    Remove
-                  </Button>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M12 3.75C12.4142 3.75 12.75 4.08579 12.75 4.5V11.25H19.5C19.9142 11.25 20.25 11.5858 20.25 12C20.25 12.4142 19.9142 12.75 19.5 12.75H12.75V19.5C12.75 19.9142 12.4142 20.25 12 20.25C11.5858 20.25 11.25 19.9142 11.25 19.5V12.75H4.5C4.08579 12.75 3.75 12.4142 3.75 12C3.75 11.5858 4.08579 11.25 4.5 11.25H11.25V4.5C11.25 4.08579 11.5858 3.75 12 3.75Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Add Variant
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <Label htmlFor={`variants.${index}.size`}>Size</Label>
-                    <Input
-                      {...register(`variants.${index}.size`)}
-                      placeholder="e.g., S, M, L, XL"
-                      className={
-                        errors.variants?.[index]?.size ? "border-red-500" : ""
-                      }
-                    />
-                    {errors.variants?.[index]?.size && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.variants[index]?.size?.message}
-                      </p>
-                    )}
-                  </div>
+      {/* Loop through Variants */}
+     
+      {variantFields.map((field, index) => (
+       <VariantFields
+    key={field.id}
+    control={control}
+    register={register}
+    variantIndex={index}
+    removeVariant={() => removeVariant(index)}
+  />
+      ))}
 
-                  <div className="flex flex-col">
-                    <Label htmlFor={`variants.${index}.color`}>Color</Label>
-                    <Input
-                      {...register(`variants.${index}.color`)}
-                      placeholder="e.g., Red, Blue, Black"
-                      className={
-                        errors.variants?.[index]?.color ? "border-red-500" : ""
-                      }
-                    />
-                    {errors.variants?.[index]?.color && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.variants[index]?.color?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col">
-                    <Label htmlFor={`variants.${index}.quantity`}>
-                      Quantity
-                    </Label>
-                    <Input
-                      type="number"
-                      {...register(`variants.${index}.quantity`, {
-                        valueAsNumber: true,
-                      })}
-                      placeholder="0"
-                      className={
-                        errors.variants?.[index]?.quantity
-                          ? "border-red-500"
-                          : ""
-                      }
-                    />
-                    {errors.variants?.[index]?.quantity && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.variants[index]?.quantity?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col">
-                    <Label htmlFor={`variants.${index}.sku`}>SKU</Label>
-                    <Input
-                      {...register(`variants.${index}.sku`)}
-                      placeholder="e.g., TSHIRT-BLK-M"
-                      className={
-                        errors.variants?.[index]?.sku ? "border-red-500" : ""
-                      }
-                    />
-                    {errors.variants?.[index]?.sku && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.variants[index]?.sku?.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
+         
             {errors.variants && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.variants.message}

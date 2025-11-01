@@ -71,7 +71,7 @@ const Collections = () => {
             </h1>
             <a
               href="/collections/volt-bags"
-              className="inline-flex items-center gap-2 px-2 uppercase py-3 bg-transparent border-white border text-white font-semibold hover:bg-white transition"
+              className="inline-flex items-center gap-2 px-2 uppercase py-2 bg-black/10  backdrop-blur-xs border-white border text-white font-semibold hover:bg-white/20"
             >
               <span>Shop Now</span>
               {/* Replace with your SVG icon or use Heroicons/other */}
@@ -155,7 +155,7 @@ const Collections = () => {
             </h1>
             <a
               href="/collections/volt-bags"
-              className="inline-flex items-center gap-2 px-2 uppercase py-3 bg-transparent border-white border text-white font-semibold hover:bg-white transition"
+              className="inline-flex items-center gap-2 px-2 uppercase py-2 bg-black/10  backdrop-blur-xs border-white border text-white font-semibold hover:bg-white/20"
             >
               <span>Shop Now</span>
               {/* Replace with your SVG icon or use Heroicons/other */}
@@ -239,7 +239,7 @@ const Collections = () => {
             </h1>
             <a
               href="/collections/volt-bags"
-              className="inline-flex items-center gap-2 px-2 uppercase py-3 bg-transparent border-white border text-white font-semibold hover:bg-white transition"
+              className="inline-flex items-center gap-2 px-2 uppercase py-2 bg-black/10  backdrop-blur-xs border-white border text-white font-semibold hover:bg-white/20"
             >
               <span>Shop Now</span>
               {/* Replace with your SVG icon or use Heroicons/other */}

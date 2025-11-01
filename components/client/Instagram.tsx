@@ -43,7 +43,7 @@ const Instagram = () => {
           </h2>
         </header>
       </section>
-      <section className="">
+      {/* <section className="">
         <ul className="flex overflow-hidden">
           <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
             <figure className="relative flex w-full">
@@ -137,7 +137,7 @@ const Instagram = () => {
             </figure>
           </li>
         </ul>
-      </section>
+      </section> */}
       <section>
         <ul className="flex overflow-hidden">
           {posts.map((post) => (

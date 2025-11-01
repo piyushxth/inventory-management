@@ -8,7 +8,7 @@ const HeroVideo = () => {
   return (
     <div
       className="  relative overflow-hidden will-change-transform
-          aspect-[375/600] max-h-auto md:max-h-[896px] lg:max-h-auto lg:aspect-[1440/650] w-full"
+          aspect-[375/600] max-h-auto md:max-h-[896px] lg:max-h-auto lg:aspect-[1440/450] w-full"
     >
       <video
         playsInline

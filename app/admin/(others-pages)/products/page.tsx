@@ -13,18 +13,9 @@ import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { TProductCreate } from "@/libs/zod_schema/products/productCreate";
+import { IProduct } from "@/libs/models/product";
 
-interface Product {
-  _id: string;
-  name: string;
-  category: string;
-  cost_price: number;
-  selling_price: number;
-  availableQuantity: number;
-  images: string[];
-}
-
-interface ProductWithId extends Product {
+interface ProductWithId extends IProduct {
   id: string;
 }
 
@@ -42,8 +33,8 @@ const columns: AdminTableColumn<any>[] = [
         ? row.category.name
         : String(row.category),
   },
-  { header: "Cost Price", accessor: "cost_price" },
-  { header: "Selling Price", accessor: "selling_price" },
+  { header: "Cost Price", accessor: "costPrice" },
+  { header: "Base Price", accessor: "basePrice" },
   { header: "Available Qty", accessor: "availableQuantity" },
 ];
 
@@ -62,10 +53,12 @@ export default function ProductsPage() {
   });
 
   // Map _id to id for table row key and selection
-  const products: ProductWithId[] = (data?.data || []).map((item: Product) => ({
-    ...item,
-    id: item._id,
-  }));
+  const products: ProductWithId[] = (data?.data || []).map(
+    (item: IProduct) => ({
+      ...item,
+      id: item._id,
+    })
+  );
 
   const handleEdit = (productId: string) => {
     router.push(`/admin/products/edit/${productId}`);

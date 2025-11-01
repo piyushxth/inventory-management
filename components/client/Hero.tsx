@@ -46,18 +46,18 @@ const Hero = () => {
             }}
           />
           <div className="relative z-10 w-full max-w-2xl">
-            <h2
+            {/* <h2
               className="fs-400 font-bold uppercase"
               style={{ color: "#e6ff5b" }}
             >
               <strong>Limited Edition</strong>
-            </h2>
-            <h1 className="uppercase text-5xl lg:text-7xl font-extrabold text-white mb-6">
-              Iconic.
+            </h2> */}
+            <h1 className="uppercase text-5xl lg:text-6xl whitespace-nowrap font-extrabold text-white mb-6">
+              Be Iconic. Be You.
             </h1>
             <a
               href="/collections/volt-bags"
-              className="inline-flex items-center gap-2 px-2 uppercase py-3 bg-transparent border-white border text-white font-semibold hover:bg-white transition"
+              className="inline-flex items-center gap-2 px-2 uppercase py-2 bg-black/10  backdrop-blur-xs border-white border text-white font-semibold hover:bg-white/20"
             >
               <span>Shop Now</span>
               {/* Replace with your SVG icon or use Heroicons/other */}

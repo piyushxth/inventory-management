@@ -9,7 +9,7 @@ const Footer = () => {
           <div className="flex flex-wrap justify-between gap-6">
             <Image
               src="/client/logo2.svg" // your image path
-              alt="Stubble and Co logo mark in black" // use descriptive alt text
+              alt="Iconic Official logo mark in black" // use descriptive alt text
               width={200} // same as original
               height={200} // same as original
               loading="lazy" // optional, Next.js does lazy loading by default
@@ -21,7 +21,7 @@ const Footer = () => {
               <li>
                 <Image
                   src="/client/logo3.svg" // your image path
-                  alt="Stubble and Co logo mark in black" // use descriptive alt text
+                  alt="Iconic Official logo mark in black" // use descriptive alt text
                   width={200} // same as original
                   height={200} // same as original
                   loading="lazy" // optional, Next.js does lazy loading by default
@@ -61,7 +61,7 @@ const Footer = () => {
             <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
               <h2 className="text-sm lg:text-sm text-balance fw-semibold leading-snug">
                 Sign up to unlock access to new products, promotions, and
-                community events. Do.More. with Stubble &amp; Co.
+                community events. Do.More. with Iconic Official.
               </h2>
 
               <div className="flex flex-col gap-3">
@@ -95,52 +95,52 @@ const Footer = () => {
 
             <ul className="col-span-12 lg:col-span-5 flex flex-wrap gap-10">
               <li className="flex-1 font-semibold flex flex-col gap-2">
-                <h1 className="text-sm fw-bold">About</h1>
+                <h1 className="text-sm fw-bold">ABOUT</h1>
                 <ul className="flex flex-col gap-3">
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Impact
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Shop All
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Do More Hub
                   </li>
                 </ul>
               </li>
               <li className="flex-1 font-semibold flex flex-col gap-2">
-                <h1 className="text-sm fw-bold">About</h1>
+                <h1 className="text-sm fw-bold">HELP</h1>
                 <ul className="flex flex-col gap-3">
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
                 </ul>
               </li>
               <li className="flex-1 font-semibold flex flex-col gap-2">
-                <h1 className="text-sm fw-bold">About</h1>
+                <h1 className="text-sm fw-bold">USEFUL INFO</h1>
                 <ul className="flex flex-col gap-3">
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
-                  <li className="uppercase text-xs text-gray-600 hover:text-black">
+                  <li className="uppercase text-xs font-normal text-black/80 cursor-pointer hover:text-black">
                     Our Mission
                   </li>
                 </ul>
@@ -149,7 +149,9 @@ const Footer = () => {
           </div>
         </section>
       </footer>
-      <section className="bg-black py-2">asdf</section>
+      <section className="bg-black text-white text-center text-sm p-2">
+        Copyright © Iconic Official. All Rights Reserved
+      </section>
     </>
   );
 };

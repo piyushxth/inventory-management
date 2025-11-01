@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import Swiper from "swiper";
 import { Navigation } from "swiper/modules";
 import ProductCard from "./ProductCard";
+import { IProduct } from "@/libs/models/product";
 
 const images = [
   "/client/product/f1.jpg",
@@ -13,8 +14,11 @@ const images = [
   "/client/product/f4.jpg",
   "/client/product/product1.webp",
 ];
+interface BestSellingProps {
+  products: IProduct[];
+}
 
-const BestSelling = () => {
+const BestSelling = ({ products }: BestSellingProps) => {
   useEffect(() => {
     const swiper = new Swiper(".best-selling-swiper", {
       modules: [Navigation],
@@ -63,19 +67,19 @@ const BestSelling = () => {
 
       <main className="relative pt-6 lg:pt-10 best-selling-swiper w-full">
         <ul className="swiper-wrapper flex  mx-[-16px] px-[16px] my-0 lg:mx-[-40px] py-0 lg:px-[40px] mr-[-40px]  ">
-          {images.map((image, index) => (
+          {products.map((product) => (
             <li
-              key={index}
+              key={product._id}
               className="swiper-slide basis-[250px] lg:basis-[360px] flex-none w-[220px] snap-start "
             >
-              <ProductCard image={image} index={index} />
+              <ProductCard product={product} />
             </li>
           ))}
         </ul>
 
         <div className=" absolute top-1/2 left-2 transform -translate-y-1/2 z-50">
-          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-prev !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
-            <div className="w-6 h-6 flex items-center justify-center">
+          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-prev !static !w-10 !h-10 !m-0 bg-black/20 hover:bg-white/20  flex items-center justify-center">
+            <div className="w-6 h-6  flex items-center justify-center">
               <svg
                 className="w-4 h-4"
                 fill="#fff"
@@ -93,7 +97,7 @@ const BestSelling = () => {
           </button>
         </div>
         <div className=" absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
-          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-next !static !w-8 !h-8 !m-0 bg-transparent backdrop-blur-sm transition-colors flex items-center justify-center">
+          <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-next !static  !w-10 !h-10 !m-0 bg-black/20 hover:bg-white/20 flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"

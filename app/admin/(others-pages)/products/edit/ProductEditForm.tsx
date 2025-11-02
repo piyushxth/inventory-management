@@ -204,13 +204,8 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
         typeof product.category === "object" && product.category !== null
           ? (product.category as any)._id
           : product.category,
-      // Ensure we have at least one variant
-      variants:
-        product.variants && product.variants.length > 0
-          ? product.variants
-          : [{ size: "", color: "", quantity: 0, sku: "" }],
-      // Ensure we have images array
-      images: product.mainImage || [],
+
+      mainImage: product.mainImage || [],
     },
   });
 
@@ -305,15 +300,6 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
       console.error("Error submitting form:", error);
       alert("Failed to upload images. Please try again.");
     }
-  };
-
-  const addVariant = () => {
-    append({
-      size: "",
-      color: "",
-      quantity: 0,
-      sku: "",
-    });
   };
 
   // Convert categories to options format for Select component
@@ -434,21 +420,6 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
                 </p>
               )}
             </div>
-            <div className="flex flex-col">
-              <Label htmlFor="totalStock">Initial Stock</Label>
-              <Input
-                id="totalStock"
-                type="number"
-                {...register("totalStock", { valueAsNumber: true })}
-                placeholder="0"
-                className={errors.totalStock ? "border-red-500" : ""}
-              />
-              {errors.totalStock && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.totalStock.message}
-                </p>
-              )}
-            </div>
           </div>
         </ComponentCard>
       </div>
@@ -470,110 +441,6 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
       </ComponentCard>
 
       {/* Variants */}
-      <ComponentCard title="Product Variants">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label>Variants</Label>
-            <Button
-              onClick={addVariant}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Add Variant
-            </Button>
-          </div>
-
-          {fields.map((field, index) => (
-            <div key={field.id} className="border p-4 rounded-lg space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Variant {index + 1}</h4>
-                <Button
-                  onClick={() => remove(index)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                >
-                  Remove
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <Label htmlFor={`variants.${index}.size`}>Size</Label>
-                  <Input
-                    {...register(`variants.${index}.size`)}
-                    placeholder="e.g., S, M, L, XL"
-                    className={
-                      errors.variants?.[index]?.size ? "border-red-500" : ""
-                    }
-                  />
-                  {errors.variants?.[index]?.size && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.variants[index]?.size?.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <Label htmlFor={`variants.${index}.color`}>Color</Label>
-                  <Input
-                    {...register(`variants.${index}.color`)}
-                    placeholder="e.g., Red, Blue, Black"
-                    className={
-                      errors.variants?.[index]?.color ? "border-red-500" : ""
-                    }
-                  />
-                  {errors.variants?.[index]?.color && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.variants[index]?.color?.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <Label htmlFor={`variants.${index}.totalStock`}>
-                    Quantity
-                  </Label>
-                  <Input
-                    type="number"
-                    {...register(`variants.${index}.totalStock`, {
-                      valueAsNumber: true,
-                    })}
-                    placeholder="0"
-                    className={
-                      errors.variants?.[index]?.quantity ? "border-red-500" : ""
-                    }
-                  />
-                  {errors.variants?.[index]?.quantity && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.variants[index]?.quantity?.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col">
-                  <Label htmlFor={`variants.${index}.sku`}>SKU</Label>
-                  <Input
-                    {...register(`variants.${index}.sku`)}
-                    placeholder="e.g., TSHIRT-BLK-M"
-                    className={
-                      errors.variants?.[index]?.sku ? "border-red-500" : ""
-                    }
-                  />
-                  {errors.variants?.[index]?.sku && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.variants[index]?.sku?.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {errors.variants && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.variants.message}
-            </p>
-          )}
-        </div>
-      </ComponentCard>
 
       {/* Submit Button */}
       <div className="flex justify-end">

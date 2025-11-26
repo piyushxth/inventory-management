@@ -30,6 +30,7 @@ export interface ICart extends Document {
   user: Types.ObjectId;
   items: ICartItem[];
   updatedAt: Date;
+  createdAt: Date;
 }
 
 export const Cart: Model<ICart> =

@@ -94,7 +94,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ product, quantity }),
+          body: JSON.stringify({ product: product._id, quantity }), // Send only product ID
         });
         
         if (response.ok) {

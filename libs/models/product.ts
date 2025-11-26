@@ -72,7 +72,7 @@ interface ISizeOption {
 
 interface IVariant {
   color: string;
-  colorHex:string;
+  colorHex: string;
   images: string[];
   options: ISizeOption[];
 }
@@ -106,7 +106,7 @@ const sizeOptionSchema = new Schema<ISizeOption>(
 const variantSchema = new Schema<IVariant>(
   {
     color: { type: String, required: true },
-      colorHex: { type: String, required: true },
+    colorHex: { type: String, required: true },
     images: [{ type: String, required: true }],
     options: { type: [sizeOptionSchema], required: true },
   },

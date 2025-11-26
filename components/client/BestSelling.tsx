@@ -77,7 +77,7 @@ const BestSelling = ({ products }: BestSellingProps) => {
           ))}
         </ul>
 
-        <div className=" absolute top-1/2 left-2 transform -translate-y-1/2 z-50">
+        <div className=" absolute top-1/2 left-2 transform -translate-y-1/2 z-40">
           <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-prev !static !w-10 !h-10 !m-0 bg-black/20 hover:bg-white/20  flex items-center justify-center">
             <div className="w-6 h-6  flex items-center justify-center">
               <svg
@@ -96,7 +96,7 @@ const BestSelling = ({ products }: BestSellingProps) => {
             </div>
           </button>
         </div>
-        <div className=" absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
+        <div className=" absolute top-1/2 right-2  transform -translate-y-1/2 z-40">
           <button className="cursor-pointer border border-white rounded-[4px] p-4 best-selling-next !static  !w-10 !h-10 !m-0 bg-black/20 hover:bg-white/20 flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg

@@ -10,6 +10,11 @@ const PUBLIC_ROUTES = [
   "/auth/admin/login",
   "/auth/client/login",
   "/restricted",
+  "/shop",
+  "/product",
+  "/cart",
+  "/checkout",
+  "/collections",
 ];
 const PUBLIC_API_ROUTES = ["/api/public-data"];
 // Admin routes

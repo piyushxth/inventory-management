@@ -20,6 +20,7 @@ export async function GET(
     }
     return NextResponse.json({ success: true, data: order }, { status: 200 });
   } catch (error) {
+    console.error("Error fetching order:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch order" },
       { status: 500 }
@@ -82,6 +83,7 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error updating order:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update order" },
       { status: 500 }
@@ -108,6 +110,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error deleting order:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete order" },
       { status: 500 }

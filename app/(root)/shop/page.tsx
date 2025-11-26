@@ -1,14 +1,23 @@
 import Features from "@/components/client/Features";
 import Instagram from "@/components/client/Instagram";
-import ProductCard from "@/components/client/ProductCard";
+import ProductFilters from "@/components/client/ProductFilters";
 import { getProducts } from "@/libs/actions/productAction";
 import { IProduct } from "@/libs/models/product";
+import { Category } from "@/libs/models/category";
+import { Brand } from "@/libs/models/brand";
+import connectMongoDB from "@/libs/connnectMongoDB";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
 async function page() {
   const products = await getProducts();
+  
+  // Fetch categories and brands for filter options
+  await connectMongoDB();
+  const categories = await Category.find();
+  const brands = await Brand.find();
+  
   // Gradients for overlays
   const mobileOverlay =
     "linear-gradient(61.56deg, rgba(0,0,0,0.18), rgba(0,0,0,0) 74.72%)";
@@ -20,7 +29,7 @@ async function page() {
       <div
         className={`
           relative overflow-hidden will-change-transform
-          aspect-[375/460] max-h-auto md:max-h-[464px] lg:max-h-auto lg:aspect-[1440/450] w-full
+          aspect-[375/460] max-h -auto md:max-h-[464px] lg:max-h-auto lg:aspect-[1440/450] w-full
         `}
       >
         <Image
@@ -102,28 +111,15 @@ async function page() {
               </ol>
             </nav>
           </div>
-          <div className="flex flex-wrap ">
-            <ul className="flex flex-1 pr-[240px] gap-4 w-full border">
-              <li>asdf</li>
-              <li>asdf</li>
-              <li>asdf</li>
-              <li>asdf</li>
-            </ul>
-            <button>asdf</button>
-          </div>
         </div>
       </section>
+      {/* Pass all data to the client component */}
       <section className="relative mx-auto px-4 lg:px-10 lg:pb-12 w-full">
-        <ul className="flex flex-wrap gap-2 lg:gap-y-8 lg:gap-x-2">
-          {products.map((product: IProduct) => (
-            <li
-              key={product._id.toString()} // convert to string for React key
-              className="flex-none basis-[calc((100%-8px)/2)] lg:basis-[calc((100%-24px)/4)] snap-start"
-            >
-              <ProductCard product={product} />
-            </li>
-          ))}
-        </ul>
+        <ProductFilters 
+          initialCategories={JSON.parse(JSON.stringify(categories))} 
+          initialBrands={JSON.parse(JSON.stringify(brands))} 
+          initialProducts={JSON.parse(JSON.stringify(products))} 
+        />
       </section>
       <Features />
       <Instagram />

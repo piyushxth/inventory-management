@@ -40,7 +40,9 @@ const Navbar = () => {
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isUserMenuOpen) {
+      const target = event.target as Node;
+      // Check if the click is outside the user menu
+      if (isUserMenuOpen && navbarRef.current && !navbarRef.current.contains(target)) {
         setIsUserMenuOpen(false);
       }
     };
@@ -171,17 +173,30 @@ const Navbar = () => {
                     <Link
                       href="/my-orders"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
                     >
                       My Orders
                     </Link>
                     <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
                     >
                       Profile
                     </Link>
                     <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          setIsUserMenuOpen(false);
+                          await signOut({ callbackUrl: "/" });
+                        } catch (error) {
+                          console.error("Sign out error:", error);
+                          // Fallback: redirect to home page
+                          window.location.href = "/";
+                        }
+                      }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Sign Out

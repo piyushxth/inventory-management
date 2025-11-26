@@ -60,18 +60,17 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Password did not match");
           }
 
-          // Check if user is admin
-          if (user.roles?.name !== "admin") {
-            // Throw a JSON stringified error so the frontend can detect it
-            throw new Error(JSON.stringify({ code: "not_admin" }));
+          // Check if user has a valid role (either admin or user)
+          const roleName = user.roles?.name ? user.roles.name.toString() : "user";
+          if (roleName !== "admin" && roleName !== "user") {
+            throw new Error("Invalid user role");
           }
 
-          const role = user.roles?.name ? user.roles.name.toString() : "user";
           const userData = {
             id: user._id.toString(),
             name: user.name.toString(),
             email: user.email.toString(),
-            role, // Return role's name as a string
+            role: roleName, // Return role's name as a string
           };
           console.log("[authorize] User data after login:", userData);
           return userData;

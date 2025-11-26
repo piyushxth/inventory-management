@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "/signup",
   "/auth/admin/login",
   "/auth/client/login",
+  "/auth/client/signup",
   "/restricted",
   "/shop",
   "/product",

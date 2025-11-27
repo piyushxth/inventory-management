@@ -1,32 +1,34 @@
-import { Inter } from "next/font/google";
-import "@/app/(root)/homeGlobals.css";
 import ClientProviders from "@/components/client/ClientProviders";
-import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
+import { Inter, Outfit } from "next/font/google";
+import Link from "next/link";
+import "@/app/(checkout)/checkoutGlobals.css";
 
+const outfit = Outfit({
+  subsets: ["latin"],
+});
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
 });
-
 export default function CheckoutLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html>
+     <html>
       <body>
         <ClientProviders>
           <div className={`${inter.className}`}>
-            <div className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
+            <div className="border-b bg-white/90 backdrop-blur">
               <div className="mx-auto max-w-7xl px-4">
                 <div className="grid grid-cols-3 items-center h-14">
                   <div />
                   <div className="flex justify-center">
-                    <span className="text-xl font-semibold tracking-widest">
+                    <Link href={"/"} className="text-xl font-semibold tracking-widest">
                       ICONIC
-                    </span>
+                    </Link>
                   </div>
                   <div className="flex justify-end">
                     <Link

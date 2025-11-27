@@ -25,6 +25,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [syncTimeout, setSyncTimeout] = useState<NodeJS.Timeout | null>(null);
   const { data: session } = useSession();
 
   // Load cart from localStorage or API on initial load
@@ -67,47 +68,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems, isLoading]);
 
-  const syncWithServer = async (items: CartItem[]) => {
-    if (session?.user?.id) {
-      try {
-        // Sync with server
-        await fetch(`/api/carts/user/${session.user.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ items }),
-        });
-      } catch (error) {
-        console.error("Error syncing cart with server:", error);
-      }
+  // Debounced sync with server
+  const debouncedSyncWithServer = (items: CartItem[]) => {
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
     }
+    
+    const newTimeout = setTimeout(async () => {
+      if (session?.user?.id) {
+        try {
+          await fetch(`/api/carts/user/${session.user.id}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ items }),
+          });
+        } catch (error) {
+          console.error("Error syncing cart with server:", error);
+        }
+      }
+    }, 1000); // Delay of 1 second
+    
+    setSyncTimeout(newTimeout);
   };
 
   const addToCart = async (product: IProduct, quantity: number = 1) => {
     setIsLoading(true);
     try {
-      if (session?.user?.id) {
-        // Add to cart via API for logged-in users
-        const response = await fetch(`/api/carts/user/${session.user.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ product: product._id, quantity }), // Send only product ID
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            setCartItems(data.data.items || []);
-            localStorage.setItem("cart", JSON.stringify(data.data.items || []));
-            return;
-          }
-        }
-      }
-      
-      // Fallback to local storage for guests
+      // Update UI immediately for responsiveness
       setCartItems(prevItems => {
         const existingItem = prevItems.find(item => item.product._id === product._id);
         
@@ -121,6 +110,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           return [...prevItems, { product, quantity }];
         }
       });
+      
+      // For logged-in users, sync with server (debounced)
+      if (session?.user?.id) {
+        // Wait a bit for state to update, then sync
+        setTimeout(() => {
+          setCartItems(currentItems => {
+            debouncedSyncWithServer(currentItems);
+            return currentItems;
+          });
+        }, 0);
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
     } finally {
@@ -133,9 +133,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       setCartItems(prevItems => {
         const updatedItems = prevItems.filter(item => item.product._id !== productId);
-        // Sync with server if logged in
+        // Sync with server if logged in (debounced)
         if (session?.user?.id) {
-          syncWithServer(updatedItems);
+          debouncedSyncWithServer(updatedItems);
         }
         return updatedItems;
       });
@@ -160,12 +160,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         )
       );
       
-      // Sync with server if logged in
+      // Sync with server if logged in (debounced)
       if (session?.user?.id) {
-        const updatedItems = cartItems.map(item =>
-          item.product._id === productId ? { ...item, quantity } : item
-        );
-        syncWithServer(updatedItems);
+        // Wait a bit for state to update, then sync
+        setTimeout(() => {
+          setCartItems(currentItems => {
+            debouncedSyncWithServer(currentItems);
+            return currentItems;
+          });
+        }, 0);
       }
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -178,9 +181,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       setCartItems([]);
-      // Clear server cart if logged in
+      // Clear server cart if logged in (debounced)
       if (session?.user?.id) {
-        syncWithServer([]);
+        debouncedSyncWithServer([]);
       }
     } catch (error) {
       console.error("Error clearing cart:", error);

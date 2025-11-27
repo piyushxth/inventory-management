@@ -5,69 +5,13 @@ import ProductFeatures from "@/components/client/ProductFeatures";
 import { IProduct } from "@/libs/models/product";
 import connectMongoDB from "@/libs/connnectMongoDB";
 import { Product } from "@/libs/models/product";
-import { Cart } from "@/libs/models/cart";
-import { Types } from "mongoose";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/libs/authOptions";
+import AddToCartButton from "@/components/client/AddToCartButton"; // Import the new client component
 
 // Function to fetch product data
 async function getProduct(id: string) {
   await connectMongoDB();
   const product = await Product.findById(id).populate("category", "name");
   return JSON.parse(JSON.stringify(product));
-}
-
-// Function to add item to cart (server action)
-async function addToCart(productId: string, quantity: number) {
-  "use server";
-  
-  // Get the user ID from NextAuth session
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
-  
-  // Redirect to login if user is not authenticated
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
-  
-  await connectMongoDB();
-  
-  // Check if user already has a cart
-  let cart = await Cart.findOne({ user: new Types.ObjectId(userId) });
-  
-  if (!cart) {
-    // Create a new cart if user doesn't have one
-    cart = new Cart({
-      user: new Types.ObjectId(userId),
-      items: []
-    });
-  }
-  
-  // Check if product already exists in cart
-  const existingItemIndex = cart.items.findIndex(
-    (item: any) => item.product.toString() === productId
-  );
-  
-  if (existingItemIndex > -1) {
-    // If product exists, update quantity
-    cart.items[existingItemIndex].quantity += quantity;
-  } else {
-    // If product doesn't exist, add new item
-    // Create a proper cart item object
-    const newCartItem: any = {
-      product: new Types.ObjectId(productId),
-      quantity: quantity
-    };
-    cart.items.push(newCartItem);
-  }
-  
-  // Save the cart
-  await cart.save();
-  
-  // Re-populate product details
-  await cart.populate("items.product");
-  
-  return JSON.parse(JSON.stringify(cart));
 }
 
 // Function to validate and filter image URLs
@@ -84,7 +28,7 @@ function validateImages(images: string[]): string[] {
   });
 }
 
-const page = async ({ params }: { params: Promise<{ id: string }> }) => {
+const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const productId = (await params).id;
   const product: IProduct = await getProduct(productId);
 
@@ -141,7 +85,7 @@ const page = async ({ params }: { params: Promise<{ id: string }> }) => {
                   {product.variants.map((variant, index) => (
                     <div 
                       key={index}
-                      className="relative bg-black w-5 h-5 rounded-[2px] border outline-offset-2 outline outline-[0.5px] outline-transparent"
+                      className="relative bg-black w-5 h-5 rounded-[2px] border outline-offset-2 outline-[0.5px] outline-transparent"
                       style={{ backgroundColor: variant.colorHex }}
                       title={variant.color}
                     ></div>
@@ -153,18 +97,8 @@ const page = async ({ params }: { params: Promise<{ id: string }> }) => {
               </li>
             )}
             <li className="flex flex-col gap-2 mt-[40px]">
-              <form action={async () => {
-                "use server";
-                await addToCart(productId, 1);
-              }}>
-                <button 
-                  type="submit"
-                  className="bg-[#e6ff5b] flex text-black bg-background max-w-[320px] items-center relative rounded-[3px] pt-2 pr-2.5 pb-2 pl-2 border justify-between"
-                >
-                  Add To Cart
-                  <span>---</span>
-                </button>
-              </form>
+              {/* Use client component for Add to Cart button */}
+              <AddToCartButton product={product} />
             </li>
             <li className="flex flex-col mt-[24px] mb-4">
               <ul className="list-disc pl-[1em] gap-1 break-words flex flex-col leading-[1.4]">
@@ -196,4 +130,4 @@ const page = async ({ params }: { params: Promise<{ id: string }> }) => {
   );
 };
 
-export default page;
+export default ProductPage;

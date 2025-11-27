@@ -3,29 +3,13 @@
 import { IProduct } from "@/libs/models/product";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React from "react";
 import { FaStar } from "react-icons/fa";
-import { useCart } from "./CartContext";
-
+import AddToCartButton from "./AddToCartButton";
 
 const ProductCard = ({ product }: { product: IProduct }) => {
-  const { addToCart } = useCart();
-  const [isAdding, setIsAdding] = useState(false);
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent Link navigation
-    e.stopPropagation();
-
-    setIsAdding(true);
-    try {
-      await addToCart(product, 1);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
   return (
-    <div className="bg-[#f5f5f5] border border-[#f5f5f5] hover:border-black transition duration-200 rounded-[2px]">
+  <div className="bg-[#f5f5f5] border border-[#f5f5f5] hover:border-black transition duration-200 rounded-[2px]">
       <Link href={`/product/${product._id}`}>
         <div className="relative p-4 h-[46px] flex flex-start justify-between gap-[8px 4px]">
           <div className="flex flex-wrap gap-2">
@@ -75,37 +59,9 @@ const ProductCard = ({ product }: { product: IProduct }) => {
 
 
           </div>
-          <div className="mt-2 border-t flex flex-wrap flex-end items-end justify-end py-3">
-            <button
-              onClick={handleAddToCart}
-              disabled={isAdding}
-              className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors disabled:opacity-50"
-              title="Add to cart"
-            >
-              {isAdding ? (
-                <span className="text-sm uppercase">Adding...</span>
-              ) : (
-                <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                  </svg>
-                  <span className="text-sm uppercase">Add to Cart</span>
-                </>
-              )}
-            </button>
-          </div>
+           <div className="mt-3 border-t flex flex-wrap flex-end items-end justify-end py-3">
+          <AddToCartButton product={product} />
+        </div>
         </div>
       </Link>
     </div>
@@ -113,4 +69,3 @@ const ProductCard = ({ product }: { product: IProduct }) => {
 };
 
 export default ProductCard;
-

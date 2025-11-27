@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { useCart } from './CartContext';
+import { useRouter } from 'next/navigation';
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -11,7 +12,7 @@ interface CartDrawerProps {
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     const { cartItems, removeFromCart, updateQuantity } = useCart();
-
+    const router = useRouter();
     // Close on Escape key and prevent body scroll
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -146,6 +147,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                                                     <button
                                                         onClick={() => updateQuantity(item.product._id as string, item.quantity - 1)}
                                                         className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
+                                                        disabled={item.quantity <= 1}
                                                     >
                                                         <span className="text-lg">−</span>
                                                     </button>
@@ -184,7 +186,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             <span className="font-bold">₹{subtotal.toFixed(2)}</span>
                         </div>
                         <p className="text-sm text-gray-500">Shipping and taxes calculated at checkout</p>
-                        <button className="w-full bg-black text-white py-3 px-6 rounded hover:bg-gray-800 transition-colors fw-semibold uppercase">
+                        <button
+                         onClick={() => router.push('/checkout')}
+                        className="w-full bg-black text-white py-3 px-6 rounded hover:bg-gray-800 transition-colors fw-semibold uppercase">
                             Checkout
                         </button>
                         <button

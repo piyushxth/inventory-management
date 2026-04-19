@@ -82,6 +82,23 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           );
         }
+        // Prevent cross-product variant swapping: an attacker could otherwise
+        // submit an expensive product paired with a cheap variant from a
+        // different product and have the server charge the cheap variant's
+        // price and decrement the wrong stock. Variants don't have a
+        // product back-reference, so we check the product's variants list.
+        const productVariantIds = (product.variants || []).map((v) =>
+          String((v as any)?._id ?? v)
+        );
+        if (!productVariantIds.includes(String(variant._id))) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: "Variant does not belong to this product.",
+            },
+            { status: 400 }
+          );
+        }
         if (!item.size) {
           return NextResponse.json(
             {

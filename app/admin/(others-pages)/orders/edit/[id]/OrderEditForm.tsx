@@ -401,6 +401,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                     { value: "Unpaid", label: "Unpaid" },
                     { value: "Paid", label: "Paid" },
                     { value: "Refunded", label: "Refunded" },
+                    { value: "Failed", label: "Failed" },
                   ]}
                   defaultValue={watch("paymentStatus")}
                   onChange={(value) =>
@@ -422,6 +423,7 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
                   options={[
                     { value: "COD", label: "Cash on Delivery" },
                     { value: "Online", label: "Online Payment" },
+                    { value: "Esewa", label: "eSewa" },
                   ]}
                   defaultValue={watch("paymentMethod")}
                   onChange={(value) =>

@@ -41,8 +41,8 @@ const orderSchema = z.object({
     "Cancelled",
     "Returned",
   ]),
-  paymentStatus: z.enum(["Paid", "Unpaid", "Refunded"]),
-  paymentMethod: z.enum(["COD", "Online"]),
+  paymentStatus: z.enum(["Paid", "Unpaid", "Refunded", "Failed"]),
+  paymentMethod: z.enum(["COD", "Online", "Esewa"]),
   orderNote: z.string().optional(),
 });
 
@@ -178,13 +178,46 @@ export default function OrderEditForm({ mode, orderId }: OrderEditFormProps) {
   const onSubmit = async (data: OrderFormData) => {
     try {
       setIsLoading(true);
-      const response = await axios.post("/api/orders", {
-        ...data,
-        items,
-        discount,
-        additionalPrice,
-        totalAmount,
-      });
+
+      // POST /api/orders expects OrderCreateSchema: customer (name/email/phone
+      // only), a top-level shippingAddress, items with product+quantity, and
+      // NO client-supplied totalAmount (server computes from Variant pricing).
+      // The admin form collects address fields under `customer`, so we split
+      // them out here before sending. totalAmount/discount/additionalPrice
+      // are ignored server-side.
+      const { customer } = data;
+      const shippingAddress = {
+        province: customer.province || "",
+        city: customer.city || "",
+        address: customer.address || "",
+        landmark: customer.landmark || undefined,
+      };
+      if (
+        !shippingAddress.province ||
+        !shippingAddress.city ||
+        !shippingAddress.address
+      ) {
+        alert(
+          "Province, city, and address are required to create an order."
+        );
+        setIsLoading(false);
+        return;
+      }
+      const payload = {
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+        },
+        shippingAddress,
+        items: items.map((i) => ({
+          product: i.product,
+          quantity: i.quantity,
+        })),
+        paymentMethod: data.paymentMethod,
+        orderNote: data.orderNote,
+      };
+      const response = await axios.post("/api/orders", payload);
       if (response.data.success) {
         alert("Order created successfully!");
         router.push("/admin/orders");

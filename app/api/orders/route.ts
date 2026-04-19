@@ -272,3 +272,51 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+// Admin-only bulk delete. Accepts { ids: string[] } and removes the matching
+// orders. Used by the admin orders table's bulk-select delete action.
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token || token.role !== "admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    const body = await req.json().catch(() => ({}));
+    const rawIds: unknown = body?.ids;
+    if (!Array.isArray(rawIds) || rawIds.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "No order ids provided" },
+        { status: 400 }
+      );
+    }
+    const ids: string[] = [];
+    for (const id of rawIds) {
+      if (typeof id !== "string" || !mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          { success: false, message: "Invalid order id in payload" },
+          { status: 400 }
+        );
+      }
+      ids.push(id);
+    }
+    await connectMongoDB();
+    const result = await Order.deleteMany({ _id: { $in: ids } });
+    return NextResponse.json(
+      {
+        success: true,
+        message: `Deleted ${result.deletedCount} order(s)`,
+        data: { deletedCount: result.deletedCount },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error bulk deleting orders:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to delete orders" },
+      { status: 500 }
+    );
+  }
+}

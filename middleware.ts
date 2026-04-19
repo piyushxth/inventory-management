@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/collections",
   "/about",
   "/events",
+  "/order-tracking",
 ];
 const PUBLIC_API_ROUTES = ["/api/public-data"];
 

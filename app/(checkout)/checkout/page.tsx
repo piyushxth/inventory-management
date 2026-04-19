@@ -401,7 +401,7 @@ export default function Checkout() {
               <h2 className="text-xl font-bold mb-4">Order Summary</h2>
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item: CartItem) => (
-                  <div key={item.product._id} className="flex gap-4">
+                  <div key={`${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`} className="flex gap-4">
                     <div className="w-16 h-16 flex-shrink-0 relative">
                       <Image 
                                               src={

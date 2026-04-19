@@ -46,6 +46,51 @@ async function fetchOrderForRead(
   return { ok: true, order };
 }
 
+// Restock items from a cancelled order. Uses an atomic conditional update on
+// `stockDecremented` so that concurrent cancels / retries can't re-increment
+// the same variant stock more than once, and wraps StockMovement.create in
+// try/catch so a failed audit row can't stop the restock loop (leaving the
+// order in a partially-restocked state that would double-up on retry).
+async function restockCancelledOrder(order: OrderDoc): Promise<void> {
+  const mark = await Order.updateOne(
+    { _id: order._id, stockDecremented: true },
+    { $set: { stockDecremented: false } }
+  );
+  if (mark.modifiedCount === 0) {
+    return; // already restocked (or never decremented)
+  }
+  for (const item of order.items) {
+    if (!item.variant || !item.size) continue;
+    try {
+      await Variant.updateOne(
+        { _id: item.variant, "options.size": item.size },
+        { $inc: { "options.$.quantity": item.quantity } }
+      );
+    } catch (err) {
+      console.error(
+        `Failed to restock variant ${item.variant} / ${item.size} for order ${order._id}:`,
+        err
+      );
+      continue;
+    }
+    try {
+      await StockMovement.create({
+        product: item.product,
+        quantity: item.quantity,
+        type: "return",
+        note: `Order ${order._id} cancelled`,
+      });
+    } catch (err) {
+      // Audit-log failures are non-fatal — the stock itself is already
+      // restored. Swallow so the loop keeps going.
+      console.error(
+        `Failed to log StockMovement for order ${order._id}, item ${item.product}:`,
+        err
+      );
+    }
+  }
+}
+
 // Write access always requires a session + ownership (or admin).
 async function ensureOrderWriteAccess(
   req: NextRequest,
@@ -146,24 +191,12 @@ export async function PUT(
     // If order is being cancelled and wasn't already cancelled, restock.
     if (
       allowed.orderStatus === "Cancelled" &&
-      prevOrder.orderStatus !== "Cancelled" &&
-      prevOrder.stockDecremented
+      prevOrder.orderStatus !== "Cancelled"
     ) {
-      for (const item of prevOrder.items) {
-        if (item.variant && item.size) {
-          await Variant.updateOne(
-            { _id: item.variant, "options.size": item.size },
-            { $inc: { "options.$.quantity": item.quantity } }
-          );
-          await StockMovement.create({
-            product: item.product,
-            quantity: item.quantity,
-            type: "return",
-            note: `Order ${prevOrder._id} cancelled`,
-          });
-        }
-      }
-      (allowed as Record<string, unknown>).stockDecremented = false;
+      await restockCancelledOrder(prevOrder);
+      // restockCancelledOrder already flips stockDecremented atomically, so
+      // we don't include it in `allowed` here.
+      delete (allowed as Record<string, unknown>).stockDecremented;
     }
 
     const updatedOrder = await Order.findByIdAndUpdate(id, allowed, {
@@ -186,7 +219,9 @@ export async function PUT(
   }
 }
 
-// Admin-only partial update.
+// Admin-only partial update. Runs the same cancellation restock logic as
+// PUT so that an admin flipping orderStatus → "Cancelled" via PATCH doesn't
+// skip the variant stock restore.
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -200,8 +235,33 @@ export async function PATCH(
         { status: 401 }
       );
     }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid order id" },
+        { status: 400 }
+      );
+    }
     await connectMongoDB();
     const updateData = await req.json();
+
+    const prevOrder = await Order.findById(id).populate("items.product");
+    if (!prevOrder) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    if (
+      updateData.orderStatus === "Cancelled" &&
+      prevOrder.orderStatus !== "Cancelled"
+    ) {
+      await restockCancelledOrder(prevOrder);
+      // Don't let the caller override stockDecremented — restockCancelledOrder
+      // owns that flag.
+      delete updateData.stockDecremented;
+    }
+
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       { $set: updateData },

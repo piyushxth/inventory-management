@@ -10,7 +10,44 @@ import { User } from "@/libs/models/users";
 
 type OrderDoc = HydratedDocument<IOrder>;
 
-async function ensureOrderAccess(
+// GET is intentionally permissive: POST /api/orders supports guest checkout,
+// so guests need to be able to load their order on /checkout/order-success
+// and /order-tracking using only the order id (which is a 96-bit Mongo
+// ObjectId and effectively unguessable). If a session *is* present and the
+// caller is not the owner or an admin, we still return 403 to prevent a
+// logged-in user from enumerating somebody else's order via the UI.
+async function fetchOrderForRead(
+  req: NextRequest,
+  orderId: string
+): Promise<
+  | { ok: true; order: OrderDoc }
+  | { ok: false; status: number; message: string }
+> {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return { ok: false, status: 400, message: "Invalid order id" };
+  }
+  await connectMongoDB();
+  const order = await Order.findById(orderId).populate("items.product");
+  if (!order) {
+    return { ok: false, status: 404, message: "Order not found" };
+  }
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (token && token.role !== "admin") {
+    const user = token.email
+      ? await User.findOne({ email: token.email }).select("_id email")
+      : null;
+    const ownsByUserId =
+      order.user && user && order.user.toString() === user._id.toString();
+    const ownsByEmail = user?.email === order.customer?.email;
+    if (!ownsByUserId && !ownsByEmail) {
+      return { ok: false, status: 403, message: "Forbidden" };
+    }
+  }
+  return { ok: true, order };
+}
+
+// Write access always requires a session + ownership (or admin).
+async function ensureOrderWriteAccess(
   req: NextRequest,
   orderId: string
 ): Promise<
@@ -50,7 +87,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const access = await ensureOrderAccess(req, id);
+    const access = await fetchOrderForRead(req, id);
     if (!access.ok) {
       return NextResponse.json(
         { success: false, message: access.message },
@@ -76,7 +113,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   try {
-    const access = await ensureOrderAccess(req, id);
+    const access = await ensureOrderWriteAccess(req, id);
     if (!access.ok) {
       return NextResponse.json(
         { success: false, message: access.message },

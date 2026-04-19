@@ -124,6 +124,7 @@ export default function Checkout() {
     try {
       if (cartItems.length === 0) {
         setError("Your cart is empty");
+        setIsSubmitting(false);
         return;
       }
       
@@ -423,9 +424,9 @@ export default function Checkout() {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-sm font-medium">{item.product.name}</h3>
-                      <p className="text-sm text-gray-500">₹{item.product.basePrice?.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">₹{(item.size?.price || item.product.basePrice || 0).toFixed(2)}</p>
                     </div>
-                    <div className="text-sm font-medium">₹{(item.product.basePrice * item.quantity).toFixed(2)}</div>
+                    <div className="text-sm font-medium">₹{((item.size?.price || item.product.basePrice || 0) * item.quantity).toFixed(2)}</div>
                   </div>
                 ))}
               </div>

@@ -2,15 +2,14 @@ import React from "react";
 import PageBreadcrumb from "@/components/admin/common/PageBreadCrumb";
 import ComponentCard from "@/components/admin/common/ComponentCard";
 import { notFound } from "next/navigation";
-import axios from "axios";
-import { TOrderRetrieve } from "@/libs/zod_schema/orderRetrieve";
+import mongoose from "mongoose";
+import connectMongoDB from "@/libs/connnectMongoDB";
+import { Order } from "@/libs/models/order";
 
-const fetchOrderById = async (id: string): Promise<TOrderRetrieve> => {
-  const orderData = await axios.get(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`
-  );
-  return orderData.data.data;
-};
+// Admin dashboard reads the order directly from Mongo — going through the
+// HTTP API from a Server Component doesn't forward the session cookie, so
+// the new auth guard on /api/orders/[id] would reject it.
+export const dynamic = "force-dynamic";
 
 const OrderViewPage = async ({
   params,
@@ -18,7 +17,15 @@ const OrderViewPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const id = (await params).id;
-  const order = await fetchOrderById(id);
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound();
+  }
+  await connectMongoDB();
+  const orderDoc = await Order.findById(id).populate("items.product").lean();
+  if (!orderDoc) {
+    notFound();
+  }
+  const order = JSON.parse(JSON.stringify(orderDoc)) as any;
 
   return (
     <div className="p-6">

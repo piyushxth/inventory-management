@@ -48,10 +48,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, alreadyPaid: true });
     }
 
-    // Verification only runs on an Unpaid order. If the order was already
-    // marked Failed by a previous attempt, don't re-run verification (and
-    // don't let anyone flip a manually-Refunded order back to Failed).
-    if (order.paymentStatus !== "Unpaid") {
+    // Allow verification on "Unpaid" (first attempt) and "Failed" (retry).
+    // Failed must stay retryable because the verify endpoint is unauthenticated
+    // — an attacker who knows the order id could otherwise POST a bogus refId
+    // to flip the status to Failed and permanently lock out the real payer.
+    // Refunded / anything else is terminal and not retryable.
+    if (order.paymentStatus !== "Unpaid" && order.paymentStatus !== "Failed") {
       return NextResponse.json(
         {
           success: false,

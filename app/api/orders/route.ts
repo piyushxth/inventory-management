@@ -169,15 +169,15 @@ export async function POST(req: NextRequest) {
     const discount = 0;
     const totalAmount = subtotal + shippingFee + tax - discount;
 
-    // Atomically decrement each variant's size quantity. Track whether every
-    // resolved item actually got decremented so we don't mark the order as
-    // `stockDecremented: true` when some items (no-variant products) had no
-    // stock path at all.
+    // Atomically decrement each variant's size quantity. The order's
+    // `stockDecremented` flag drives the cancel-restock path, so it must be
+    // true whenever *any* variant stock was actually subtracted — otherwise
+    // a mixed order (some variant-products, some not) would leak stock on
+    // cancel because restockCancelledOrder early-returns when the flag is
+    // false.
     const decremented: Resolved[] = [];
-    let allItemsDecremented = true;
     for (const r of resolved) {
       if (!r.variantId || !r.size) {
-        allItemsDecremented = false;
         continue;
       }
       const updated = await Variant.findOneAndUpdate(
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
         paymentMethod: input.paymentMethod,
         paymentStatus: "Unpaid",
         orderNote: input.orderNote,
-        stockDecremented: allItemsDecremented,
+        stockDecremented: decremented.length > 0,
       });
       const savedOrder = await newOrder.save();
 

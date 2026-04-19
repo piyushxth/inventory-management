@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/components/client/CartContext";
 
@@ -9,17 +9,25 @@ function EsewaSuccessInner() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const [error, setError] = useState<string | null>(null);
+  // Guards against StrictMode double-invoke and unstable-dep re-runs. We
+  // deliberately omit `clearCart` from the effect deps below because it's an
+  // inline function from CartContext and gets a fresh reference on every
+  // provider render — listing it would re-fire this effect each time
+  // clearCart() triggers a cart state update.
+  const verifiedRef = useRef(false);
 
   const oid = searchParams.get("oid");
   const refId = searchParams.get("refId");
 
   useEffect(() => {
+    if (verifiedRef.current) return;
     const verifyPayment = async () => {
       try {
         if (!oid || !refId) {
           setError("Missing payment information");
           return;
         }
+        verifiedRef.current = true;
         // Server-side verification against eSewa using the server-stored
         // totalAmount — never trust `amt` from the query string.
         const response = await fetch("/api/esewa-verify", {
@@ -40,7 +48,8 @@ function EsewaSuccessInner() {
       }
     };
     verifyPayment();
-  }, [oid, refId, router, clearCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oid, refId, router]);
 
   if (error) {
     return (

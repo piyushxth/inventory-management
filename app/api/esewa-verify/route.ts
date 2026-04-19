@@ -30,9 +30,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Only eSewa orders can be verified here. Without this guard a caller
+    // who knows a COD order id could force paymentStatus = "Failed" on the
+    // failure path below.
+    if (order.paymentMethod !== "Esewa") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Order was not paid via eSewa",
+        },
+        { status: 400 }
+      );
+    }
+
     // Already paid — idempotent success response.
     if (order.paymentStatus === "Paid") {
       return NextResponse.json({ success: true, alreadyPaid: true });
+    }
+
+    // Verification only runs on an Unpaid order. If the order was already
+    // marked Failed by a previous attempt, don't re-run verification (and
+    // don't let anyone flip a manually-Refunded order back to Failed).
+    if (order.paymentStatus !== "Unpaid") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Order payment status is '${order.paymentStatus}'; cannot reverify`,
+        },
+        { status: 400 }
+      );
     }
 
     const serverAmt = order.totalAmount;

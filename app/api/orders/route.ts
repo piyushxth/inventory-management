@@ -68,6 +68,23 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // If the product has variants configured, the caller MUST pick one
+      // (plus size). Otherwise they could submit `{ product, quantity }` only,
+      // bypass the variant-level price + stock checks below, get charged the
+      // (possibly cheaper) `basePrice`, and — since the decrement loop skips
+      // items without variant+size — never actually decrement stock.
+      const productHasVariants =
+        Array.isArray(product.variants) && product.variants.length > 0;
+      if (productHasVariants && (!item.variant || !item.size)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Variant and size are required for ${product.name}.`,
+          },
+          { status: 400 }
+        );
+      }
+
       let price = product.basePrice;
       let variant: IVariant | null = null;
       let sizeOption:
@@ -152,10 +169,17 @@ export async function POST(req: NextRequest) {
     const discount = 0;
     const totalAmount = subtotal + shippingFee + tax - discount;
 
-    // Atomically decrement each variant's size quantity.
+    // Atomically decrement each variant's size quantity. Track whether every
+    // resolved item actually got decremented so we don't mark the order as
+    // `stockDecremented: true` when some items (no-variant products) had no
+    // stock path at all.
     const decremented: Resolved[] = [];
+    let allItemsDecremented = true;
     for (const r of resolved) {
-      if (!r.variantId || !r.size) continue;
+      if (!r.variantId || !r.size) {
+        allItemsDecremented = false;
+        continue;
+      }
       const updated = await Variant.findOneAndUpdate(
         {
           _id: r.variantId,
@@ -212,9 +236,9 @@ export async function POST(req: NextRequest) {
         totalAmount,
         currency: "NPR",
         paymentMethod: input.paymentMethod,
-        paymentStatus: input.paymentMethod === "COD" ? "Unpaid" : "Unpaid",
+        paymentStatus: "Unpaid",
         orderNote: input.orderNote,
-        stockDecremented: true,
+        stockDecremented: allItemsDecremented,
       });
       const savedOrder = await newOrder.save();
 

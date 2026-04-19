@@ -3,23 +3,47 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { IProduct, IPopulatedProduct } from "@/libs/models/product";
+import { IVariant, ISizeOption } from "@/libs/models/variant";
 
-// Create a union type that accepts both regular and populated products
+// Products in the cart may be either fully populated or minimally populated,
+// but we always require `_id` + `name` + `basePrice`.
 type ProductType = IProduct | IPopulatedProduct;
+
+// Cart-safe subsets — we only persist the fields we need to render and
+// re-identify the line item so the shape is JSON-serializable.
+export type CartVariant = Pick<
+  IVariant,
+  "_id" | "color" | "colorHex" | "images"
+>;
+export type CartSize = ISizeOption;
 
 export interface CartItem {
   product: ProductType;
   quantity: number;
-  variant?: any;
-  size?: any;
+  variant?: CartVariant;
+  size?: CartSize;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
-  addToCart: (product: ProductType, quantity?: number, variant?: any, size?: any) => Promise<void>;
-  removeFromCart: (productId: string, variant?: any, size?: any) => Promise<void>;
-  updateQuantity: (productId: string, quantity: number, variant?: any, size?: any) => Promise<void>;
+  addToCart: (
+    product: ProductType,
+    quantity?: number,
+    variant?: CartVariant,
+    size?: CartSize
+  ) => Promise<void>;
+  removeFromCart: (
+    productId: string,
+    variant?: CartVariant,
+    size?: CartSize
+  ) => Promise<void>;
+  updateQuantity: (
+    productId: string,
+    quantity: number,
+    variant?: CartVariant,
+    size?: CartSize
+  ) => Promise<void>;
   clearCart: () => Promise<void>;
   isLoading: boolean;
 }
@@ -105,7 +129,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setSyncTimeout(newTimeout);
   };
 
-  const addToCart = async (product: ProductType, quantity: number = 1, variant?: any, size?: any) => {
+  const addToCart = async (product: ProductType, quantity: number = 1, variant?: CartVariant, size?: CartSize) => {
     setIsLoading(true);
     try {
       // Update UI immediately for responsiveness
@@ -152,7 +176,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const removeFromCart = async (productId: string, variant?: any, size?: any) => {
+  const removeFromCart = async (productId: string, variant?: CartVariant, size?: CartSize) => {
     setIsLoading(true);
     try {
       setCartItems(prevItems => {
@@ -188,7 +212,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateQuantity = async (productId: string, quantity: number, variant?: any, size?: any) => {
+  const updateQuantity = async (productId: string, quantity: number, variant?: CartVariant, size?: CartSize) => {
     if (quantity <= 0) {
       await removeFromCart(productId, variant, size);
       return;

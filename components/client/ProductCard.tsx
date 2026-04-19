@@ -1,6 +1,7 @@
 "use client";
 
 import { IProduct, IPopulatedProduct } from "@/libs/models/product";
+import { IVariant } from "@/libs/models/variant";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
@@ -8,161 +9,75 @@ import { FaStar } from "react-icons/fa";
 import AddToCartButton from "./AddToCartButton";
 
 const ProductCard = ({ product }: { product: IProduct }) => {
-  console.log("Rendering ProductCard for product:", product);
-  // State to track selected color for this product
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  // State to track hovered color for this product
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
-  // State to track the current image URL for smooth transitions
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  // State to track the previous image for fade transition
   const [previousImage, setPreviousImage] = useState<string | null>(null);
-  // State to track if image is transitioning
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  // State to track if image has loaded
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
 
-  // Initialize with the first variant's image or main image
+  const isValidImage = (image: string | undefined): image is string =>
+    !!image &&
+    (image.startsWith("/") ||
+      image.startsWith("http://") ||
+      image.startsWith("https://"));
+
+  const getProductImageForColor = (colorHex: string): string | null => {
+    const variant = product.variants.find(
+      (v: IVariant) => v.colorHex === colorHex
+    );
+    if (variant && variant.images && variant.images.length > 0) {
+      const image = variant.images[0];
+      if (isValidImage(image)) return image;
+    }
+    if (product.mainImage && product.mainImage.length > 0 && isValidImage(product.mainImage[0])) {
+      return product.mainImage[0];
+    }
+    return null;
+  };
+
+  const getProductImage = (): string | null => {
+    const targetColor = hoveredColor || selectedColor;
+    if (targetColor) return getProductImageForColor(targetColor);
+
+    if (product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      if (firstVariant.images && firstVariant.images.length > 0) {
+        const image = firstVariant.images[0];
+        if (isValidImage(image)) return image;
+      }
+    }
+    if (product.mainImage && product.mainImage.length > 0 && isValidImage(product.mainImage[0])) {
+      return product.mainImage[0];
+    }
+    return null;
+  };
+
   useEffect(() => {
-    const imageUrl = getProductImage();
-    setCurrentImage(imageUrl);
-    // Reset imageLoaded when changing images
+    setCurrentImage(getProductImage());
     setImageLoaded(false);
   }, [product]);
 
-  // Handle image transitions with fade effect
   useEffect(() => {
     const newImage = getProductImage();
-
     if (newImage !== currentImage) {
-      // Store the current image as previous
       setPreviousImage(currentImage);
-      // Set the new image as current
       setCurrentImage(newImage);
-      // Reset imageLoaded when changing images
       setImageLoaded(false);
-      // Trigger transition
       setIsTransitioning(true);
-
-      // Reset transition state after animation completes
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 500);
-
+      const timer = setTimeout(() => setIsTransitioning(false), 500);
       return () => clearTimeout(timer);
     }
   }, [selectedColor, hoveredColor, product]);
 
-  // Function to handle color selection
-  const handleColorSelect = (colorHex: string) => {
-    setSelectedColor(colorHex);
-  };
+  const handleColorSelect = (colorHex: string) => setSelectedColor(colorHex);
+  const handleColorHover = (colorHex: string) => setHoveredColor(colorHex);
+  const handleColorHoverExit = () => setHoveredColor(null);
 
-  // Function to handle color hover
-  const handleColorHover = (colorHex: string) => {
-    setHoveredColor(colorHex);
-  };
-
-  // Function to handle color hover exit
-  const handleColorHoverExit = () => {
-    setHoveredColor(null);
-  };
-
-  // Helper function to get image for a specific color
-  const getProductImageForColor = (colorHex: string) => {
-    const variant = product.variants.find(
-      (v) => (v as any).colorHex === colorHex,
-    );
-    if (
-      variant &&
-      (variant as any).images &&
-      (variant as any).images.length > 0
-    ) {
-      const image = (variant as any).images[0];
-      if (typeof image === "string" && image.length > 0) {
-        if (
-          image.startsWith("/") ||
-          image.startsWith("http://") ||
-          image.startsWith("https://")
-        ) {
-          return image;
-        }
-      }
-    }
-
-    // Fallback to main product image
-    if (product.mainImage && product.mainImage.length > 0) {
-      const mainImage = product.mainImage[0];
-      if (typeof mainImage === "string" && mainImage.length > 0) {
-        if (
-          mainImage.startsWith("/") ||
-          mainImage.startsWith("http://") ||
-          mainImage.startsWith("https://")
-        ) {
-          return mainImage;
-        }
-      }
-    }
-
-    return null;
-  };
-
-  // Get the image for the product based on selected or hovered color
-  const getProductImage = () => {
-    // Priority: hovered > selected > default (first variant)
-    const targetColor = hoveredColor || selectedColor;
-
-    // If a color is selected or hovered, find the variant with that color and return its first image
-    if (targetColor) {
-      return getProductImageForColor(targetColor);
-    }
-
-    // Fallback to first variant's image or main image
-    if (product.variants && product.variants.length > 0) {
-      const firstVariant = product.variants[0];
-      if (
-        (firstVariant as any).images &&
-        (firstVariant as any).images.length > 0
-      ) {
-        const image = (firstVariant as any).images[0];
-        if (typeof image === "string" && image.length > 0) {
-          // Check if it's a valid relative path (starts with /) or absolute URL
-          if (
-            image.startsWith("/") ||
-            image.startsWith("http://") ||
-            image.startsWith("https://")
-          ) {
-            return image;
-          }
-        }
-      }
-    }
-
-    if (product.mainImage && product.mainImage.length > 0) {
-      const mainImage = product.mainImage[0];
-      if (typeof mainImage === "string" && mainImage.length > 0) {
-        // Check if it's a valid relative path (starts with /) or absolute URL
-        if (
-          mainImage.startsWith("/") ||
-          mainImage.startsWith("http://") ||
-          mainImage.startsWith("https://")
-        ) {
-          return mainImage;
-        }
-      }
-    }
-
-    // Return null if no valid image found
-    return null;
-  };
-
-  // Construct the product link with variant parameter if a color is selected
-  const getProductLink = () => {
-    if (selectedColor) {
-      return `/product/${product._id}?variant=${selectedColor}`;
-    }
-    return `/product/${product._id}`;
-  };
+  const getProductLink = () =>
+    selectedColor
+      ? `/product/${product._id}?variant=${selectedColor}`
+      : `/product/${product._id}`;
 
   return (
     <div className="bg-[#f5f5f5] border border-[#f5f5f5] hover:border-black transition duration-200 rounded-[2px]">
@@ -175,7 +90,6 @@ const ProductCard = ({ product }: { product: IProduct }) => {
           </div>
         </div>
         <div className="relative aspect-[1/1] overflow-hidden">
-          {/* Previous image (fading out) */}
           {previousImage && imageLoaded && (
             <Image
               src={previousImage}
@@ -187,8 +101,6 @@ const ProductCard = ({ product }: { product: IProduct }) => {
               priority={false}
             />
           )}
-
-          {/* Current image (fading in) */}
           {currentImage ? (
             <Image
               src={currentImage}
@@ -201,13 +113,10 @@ const ProductCard = ({ product }: { product: IProduct }) => {
               onLoad={() => setImageLoaded(true)}
             />
           ) : (
-            // Skeleton loader when no image is available
             <div className="h-full w-full bg-gray-200 animate-pulse flex items-center justify-center">
               <div className="bg-gray-300 border-2 border-dashed rounded-xl w-16 h-16" />
             </div>
           )}
-
-          {/* Shimmer overlay while loading */}
           {!imageLoaded && currentImage && (
             <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:400%_400%] animate-shimmer"></div>
           )}
@@ -232,29 +141,28 @@ const ProductCard = ({ product }: { product: IProduct }) => {
 
         <div className="flex flex-wrap flex-start items-center">
           <ul className="flex flex-wrap gap-2 items-center">
-            {product.variants.map((variant) => (
+            {product.variants.map((variant: IVariant) => (
               <li
-                key={(variant as any).colorHex}
+                key={variant.colorHex}
                 className={`w-6 h-6 rounded-md border cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-110 hover:border-2 hover:border-black ${
-                  hoveredColor === (variant as any).colorHex ||
-                  selectedColor === (variant as any).colorHex
+                  hoveredColor === variant.colorHex ||
+                  selectedColor === variant.colorHex
                     ? "border-2 border-black scale-110"
                     : "border border-gray-300"
                 }`}
-                style={{ backgroundColor: (variant as any).colorHex }}
-                title={(variant as any).color}
+                style={{ backgroundColor: variant.colorHex }}
+                title={variant.color}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleColorSelect((variant as any).colorHex);
+                  handleColorSelect(variant.colorHex);
                 }}
-                onMouseEnter={() => handleColorHover((variant as any).colorHex)}
+                onMouseEnter={() => handleColorHover(variant.colorHex)}
                 onMouseLeave={() => handleColorHoverExit()}
               ></li>
             ))}
           </ul>
         </div>
         <div className="mt-3 border-t flex flex-wrap flex-end items-end justify-end py-3">
-          {/* Pass a type assertion to satisfy the AddToCartButton's expected type */}
           <AddToCartButton product={product as unknown as IPopulatedProduct} />
         </div>
       </div>

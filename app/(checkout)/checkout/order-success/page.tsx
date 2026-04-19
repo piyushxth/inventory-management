@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IOrder } from "@/libs/models/order";
@@ -12,7 +12,7 @@ interface OrderApiResponse {
   message?: string;
 }
 
-export default function OrderSuccess() {
+function OrderSuccessInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -100,9 +100,11 @@ export default function OrderSuccess() {
               <p className="font-medium">{order.customer.name}</p>
               <p className="text-gray-600">{order.customer.email}</p>
               <p className="text-gray-600">{order.customer.phone}</p>
-              <p className="text-gray-600 mt-2">
-                {order.customer.address}, {order.customer.city}, {order.customer.province}
-              </p>
+              {order.shippingAddress ? (
+                <p className="text-gray-600 mt-2">
+                  {order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.province}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -153,5 +155,13 @@ export default function OrderSuccess() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrderSuccess() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 text-center text-gray-500">Loading order details...</div>}>
+      <OrderSuccessInner />
+    </Suspense>
   );
 }

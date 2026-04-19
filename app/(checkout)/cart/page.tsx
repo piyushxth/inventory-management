@@ -17,16 +17,13 @@ const CartPage = () => {
   const router = useRouter();
   const [suggestedProducts, setSuggestedProducts] = useState<IProduct[]>([]);
 
-  // Calculate total price
+  // Calculate subtotal from size-level price (falls back to basePrice).
   const subtotal = cartItems.reduce((total: number, item: CartItem) => {
-    // Use variant price if available, otherwise use base product price
     const price = item.size?.price || item.product.basePrice || 0;
-    return total + (price * item.quantity);
+    return total + price * item.quantity;
   }, 0);
 
-  // Calculate savings (assuming 10% discount for demo purposes)
-  const savings = subtotal * 0.1;
-  const total = subtotal - savings;
+  const total = subtotal;
 
   // Function to get the display image for a product
   const getProductImage = (item: CartItem) => {
@@ -192,10 +189,6 @@ const CartPage = () => {
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sale Savings</span>
-                  <span className="text-green-600">-₹{savings.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>

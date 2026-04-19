@@ -1,11 +1,6 @@
 // libs/connnectMongoDB.ts
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable.");
-}
-
 declare global {
   var mongoose: {
     conn: mongoose.Connection | null;
@@ -19,14 +14,21 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
+// Lazy env lookup so importing this module does not crash at build time
+// (e.g. on Vercel's build step where MONGODB_URI isn't available). The
+// variable is only required when an actual connection is established.
 async function connectMongoDB({ seed = false } = {}) {
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error("Please define the MONGODB_URI environment variable.");
+    }
     cached.promise = mongoose
-      .connect(MONGODB_URI, { bufferCommands: false })
+      .connect(uri, { bufferCommands: false })
       .then((mongooseInstance) => mongooseInstance.connection);
   }
 

@@ -405,21 +405,6 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
               )}
             </div>
 
-            <div className="flex flex-col">
-              <Label htmlFor="availableQuantity">Available Quantity</Label>
-              <Input
-                id="availableQuantity"
-                type="number"
-                {...register("availableQuantity", { valueAsNumber: true })}
-                placeholder="0"
-                className={errors.availableQuantity ? "border-red-500" : ""}
-              />
-              {errors.availableQuantity && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.availableQuantity.message}
-                </p>
-              )}
-            </div>
           </div>
         </ComponentCard>
       </div>

@@ -2,15 +2,14 @@ import React from "react";
 import PageBreadcrumb from "@/components/admin/common/PageBreadCrumb";
 import ComponentCard from "@/components/admin/common/ComponentCard";
 import { notFound } from "next/navigation";
-import axios from "axios";
-import { TOrderRetrieve } from "@/libs/zod_schema/orderRetrieve";
+import mongoose from "mongoose";
+import connectMongoDB from "@/libs/connnectMongoDB";
+import { Order } from "@/libs/models/order";
 
-const fetchOrderById = async (id: string): Promise<TOrderRetrieve> => {
-  const orderData = await axios.get(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`
-  );
-  return orderData.data.data;
-};
+// Admin dashboard reads the order directly from Mongo — going through the
+// HTTP API from a Server Component doesn't forward the session cookie, so
+// the new auth guard on /api/orders/[id] would reject it.
+export const dynamic = "force-dynamic";
 
 const OrderViewPage = async ({
   params,
@@ -18,7 +17,15 @@ const OrderViewPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const id = (await params).id;
-  const order = await fetchOrderById(id);
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound();
+  }
+  await connectMongoDB();
+  const orderDoc = await Order.findById(id).populate("items.product").lean();
+  if (!orderDoc) {
+    notFound();
+  }
+  const order = JSON.parse(JSON.stringify(orderDoc)) as any;
 
   return (
     <div className="p-6">
@@ -42,16 +49,16 @@ const OrderViewPage = async ({
               <strong>Phone:</strong> {order.customer?.phone}
             </div>
             <div>
-              <strong>Province:</strong> {order.customer?.province}
+              <strong>Province:</strong> {order.shippingAddress?.province}
             </div>
             <div>
-              <strong>City:</strong> {order.customer?.city}
+              <strong>City:</strong> {order.shippingAddress?.city}
             </div>
             <div>
-              <strong>Address:</strong> {order.customer?.address}
+              <strong>Address:</strong> {order.shippingAddress?.address}
             </div>
             <div>
-              <strong>Landmark:</strong> {order.customer?.landmark}
+              <strong>Landmark:</strong> {order.shippingAddress?.landmark}
             </div>
           </div>
         </ComponentCard>
@@ -96,8 +103,8 @@ const OrderViewPage = async ({
               <strong>Discount:</strong> ${order.discount?.toFixed(2) ?? 0}
             </div>
             <div>
-              <strong>Additional Price:</strong> $
-              {order.additionalPrice?.toFixed(2) ?? 0}
+              <strong>Shipping Fee:</strong> $
+              {order.shippingFee?.toFixed(2) ?? 0}
             </div>
             <div>
               <strong>Total Amount:</strong> $

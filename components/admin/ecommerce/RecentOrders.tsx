@@ -23,7 +23,7 @@ interface Order {
     product: {
       _id: string;
       name: string;
-      images: string[];
+      mainImage?: string[];
       category?: string;
     };
     quantity: number;
@@ -139,12 +139,12 @@ export default function RecentOrders() {
                     <TableCell className="py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-[50px] w-[50px] overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700">
-                          {firstItem?.product?.images &&
-                          firstItem.product.images.length > 0 ? (
+                          {firstItem?.product?.mainImage &&
+                          firstItem.product.mainImage.length > 0 ? (
                             <Image
                               width={50}
                               height={50}
-                              src={firstItem.product.images[0]}
+                              src={firstItem.product.mainImage[0]}
                               className="h-[50px] w-[50px] object-cover"
                               alt={firstItem.product.name}
                             />

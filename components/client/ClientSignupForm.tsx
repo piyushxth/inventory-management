@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ZodFormattedError } from "zod";
-import { TUserCreate, UserCreateSchema } from "@/libs/zod_schema/user";
+import { signIn } from "next-auth/react";
+import { TUserSignup, UserSignupSchema } from "@/libs/zod_schema/user";
 
-type SignupErrors = ZodFormattedError<TUserCreate, string>;
+type SignupErrors = ZodFormattedError<TUserSignup, string>;
 
 const ClientSignupForm: React.FC = () => {
   const router = useRouter();
@@ -49,23 +50,8 @@ const ClientSignupForm: React.FC = () => {
     setFormError(null);
     setSuccess(null);
 
-    // Check if passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setFormError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
-
-    // Validate form data using Zod schema
-    const result = UserCreateSchema.omit({ 
-      profilePicture: true, 
-      roles: true, 
-      address: true 
-    }).safeParse({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    });
+    // Validate form data (including confirmPassword match) using Zod.
+    const result = UserSignupSchema.safeParse(formData);
 
     if (!result.success) {
       setErrors(result.error.format());
@@ -74,16 +60,14 @@ const ClientSignupForm: React.FC = () => {
     }
 
     try {
-      // Attempt to create user via API
       const response = await fetch("/api/users", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: result.data.name,
           email: result.data.email,
           password: result.data.password,
+          confirmPassword: result.data.confirmPassword,
         }),
       });
 
@@ -92,11 +76,18 @@ const ClientSignupForm: React.FC = () => {
       if (!response.ok || !data.success) {
         setFormError(data.message || "Failed to create account");
       } else {
-        setSuccess("Account created successfully! Redirecting to login...");
-        // Redirect to login page after successful signup
-        setTimeout(() => {
+        setSuccess("Account created — signing you in...");
+        const signInResp = await signIn("credentials", {
+          email: result.data.email,
+          password: result.data.password,
+          redirect: false,
+        });
+        if (signInResp?.error) {
           router.push("/auth/client/login");
-        }, 2000);
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       }
     } catch (error) {
       // Type-checking `error` as unknown

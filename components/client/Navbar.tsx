@@ -42,7 +42,11 @@ const Navbar = () => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       // Check if the click is outside the user menu
-      if (isUserMenuOpen && navbarRef.current && !navbarRef.current.contains(target)) {
+      if (
+        isUserMenuOpen &&
+        navbarRef.current &&
+        !navbarRef.current.contains(target)
+      ) {
         setIsUserMenuOpen(false);
       }
     };
@@ -58,7 +62,7 @@ const Navbar = () => {
     const measure = () => {
       if (navbarRef.current) {
         setOffsetTop(
-          navbarRef.current.getBoundingClientRect().top + window.scrollY
+          navbarRef.current.getBoundingClientRect().top + window.scrollY,
         );
       }
     };
@@ -83,19 +87,21 @@ const Navbar = () => {
     <>
       <nav
         ref={navbarRef}
-        className={`group ${borderColor} ${isSticky
-          ? "fixed top-0 left-0 right-0 z-50 bg-white"
-          : "absolute top-0 left-0 right-0 z-50 hover:bg-white hover:border-black"
-          } fs-200 flex items-center justify-between transition-all duration-300`}
+        className={`group ${borderColor} ${
+          isSticky
+            ? "fixed top-0 left-0 right-0 z-50 bg-white"
+            : "absolute top-0 left-0 right-0 z-50 hover:bg-white hover:border-black"
+        } fs-200 flex items-center justify-between transition-all duration-300`}
       >
         <ul className="flex items-center w-full">
           <li className="flex">
             <Link
               href="/"
-              className={`text-lg lg:text-lg py-2.5 px-6 fw-bold transition-colors duration-300 ${isSticky || pathname.includes("/product")
-                ? "text-black group-hover:text-black"
-                : "text-white group-hover:text-black"
-                }`}
+              className={`text-lg lg:text-lg py-2.5 px-6 fw-bold transition-colors duration-300 ${
+                isSticky || pathname.includes("/product")
+                  ? "text-black group-hover:text-black"
+                  : "text-white group-hover:text-black"
+              }`}
             >
               <div className="relative block w-[136px] h-[15px] lg:w-[145px] lg:h-[16px]">
                 <svg
@@ -124,20 +130,22 @@ const Navbar = () => {
             </Link>
           </li>
           <li
-            className={`flex flex-1 group-hover:border-l group-hover:border-black ${isSticky || pathname.includes("/product")
-              ? "border-l border-black"
-              : "border-l border-white"
-              }`}
+            className={`flex flex-1 group-hover:border-l group-hover:border-black ${
+              isSticky || pathname.includes("/product")
+                ? "border-l border-black"
+                : "border-l border-white"
+            }`}
           >
             <nav className="hidden lg:flex items-center">
               {Navlinks.map((link, index) => (
                 <Link
                   href={link.href}
                   key={index}
-                  className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${isSticky || pathname.includes("/product")
-                    ? "text-black group-hover:text-black"
-                    : "text-white group-hover:text-black"
-                    }`}
+                  className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
+                    isSticky || pathname.includes("/product")
+                      ? "text-black group-hover:text-black"
+                      : "text-white group-hover:text-black"
+                  }`}
                 >
                   {link.title}
                 </Link>
@@ -146,27 +154,29 @@ const Navbar = () => {
           </li>
           <Link
             href={"/help"}
-            className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${isSticky || pathname.includes("/product")
-              ? "border-l border-black"
-              : "border-l border-white text-white group-hover:border-black group-hover:text-black"
-              }`}
+            className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
+              isSticky || pathname.includes("/product")
+                ? "border-l border-black"
+                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+            }`}
           >
             HELP
           </Link>
-          
+
           {/* User Menu */}
           {session?.user ? (
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${isSticky || pathname.includes("/product")
-                  ? "border-l border-black text-black group-hover:text-black"
-                  : "border-l border-white text-white group-hover:border-black group-hover:text-black"
-                  }`}
+                className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
+                  isSticky || pathname.includes("/product")
+                    ? "border-l border-black text-black group-hover:text-black"
+                    : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+                }`}
               >
                 ACCOUNT
               </button>
-              
+
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   <div className="py-1">
@@ -208,21 +218,23 @@ const Navbar = () => {
           ) : (
             <Link
               href="/auth/client/login"
-              className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${isSticky || pathname.includes("/product")
-                ? "border-l border-black text-black group-hover:text-black"
-                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
-                }`}
+              className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
+                isSticky || pathname.includes("/product")
+                  ? "border-l border-black text-black group-hover:text-black"
+                  : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+              }`}
             >
               LOGIN
             </Link>
           )}
-          
+
           <button
             onClick={() => setIsCartOpen(true)}
-            className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${isSticky || pathname.includes("/product")
-              ? "border-l border-black text-black group-hover:text-black"
-              : "border-l border-white text-white group-hover:border-black group-hover:text-black"
-              }`}
+            className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
+              isSticky || pathname.includes("/product")
+                ? "border-l border-black text-black group-hover:text-black"
+                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+            }`}
           >
             CART {cartCount > 0 && `(${cartCount})`}
           </button>
@@ -231,8 +243,6 @@ const Navbar = () => {
 
       {/* Cart Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      
-              
     </>
   );
 };

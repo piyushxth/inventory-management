@@ -17,7 +17,9 @@ export async function getProducts({
   let query: any = {};
   if (categoryId) query.category = categoryId;
 
-  let dbQuery = Product.find(query).populate("category", "name");
+  let dbQuery = Product.find(query)
+    .populate("category", "name")
+    .populate("variants");
 
   if (sortBy) dbQuery = dbQuery.sort(sortBy);
   if (limit) dbQuery = dbQuery.limit(limit);

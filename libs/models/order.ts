@@ -38,7 +38,7 @@ const orderSchema: Schema = new Schema(
       enum: ["Paid", "Unpaid", "Refunded"],
       default: "Unpaid",
     },
-    paymentMethod: { type: String, enum: ["COD", "Online"] },
+    paymentMethod: { type: String, enum: ["COD", "Online", "Esewa"] },
     orderNote: { type: String },
   },
   { timestamps: { createdAt: "createdDate", updatedAt: "modifiedDate" } }
@@ -72,7 +72,7 @@ export interface IOrder extends Document {
     | "Cancelled"
     | "Returned";
   paymentStatus: "Paid" | "Unpaid" | "Refunded";
-  paymentMethod: "COD" | "Online";
+  paymentMethod: "COD" | "Online" | "Esewa";
   orderNote?: string;
   createdDate: Date;
   modifiedDate: Date;

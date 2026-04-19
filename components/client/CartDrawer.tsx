@@ -32,7 +32,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
         };
     }, [isOpen, onClose]);
 
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.basePrice * item.quantity), 0);
+    const subtotal = cartItems.reduce((sum, item) => {
+        // Use variant price if available, otherwise use base product price
+        const price = item.size?.price || item.product.basePrice || 0;
+        return sum + (price * item.quantity);
+    }, 0);
 
     return (
         <>
@@ -126,26 +130,50 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         ) : (
                             <div className="space-y-4">
                                 {cartItems.map((item) => (
-                                    <div key={item.product._id} className="flex gap-4 pb-4 border-b border-gray-100">
+                                    <div key={`${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`} className="flex gap-4 pb-4 border-b border-gray-100">
                                         {/* Product Image */}
                                         <div className="w-24 h-24 bg-gray-200 rounded flex-shrink-0 relative overflow-hidden">
                                             <Image
-                                                src={item.product.mainImage[0]}
+                                                src={
+                                                  item.variant && item.variant.images && item.variant.images.length > 0 ?
+                                                    item.variant.images[0] :
+                                                    item.product.mainImage && item.product.mainImage.length > 0 ?
+                                                      item.product.mainImage[0] :
+                                                      "/placeholder.jpg"
+                                                }
                                                 alt={item.product.name}
                                                 fill
                                                 sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                                                 className="object-cover"
+                                                onError={(e) => {
+                                                  // Fallback to placeholder if image fails to load
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.src = "/placeholder.jpg";
+                                                }}
                                             />
                                         </div>
 
                                         {/* Product Details */}
                                         <div className="flex-1">
                                             <h3 className="font-semibold text-gray-900">{item.product.name}</h3>
-                                            {item.variant && <p className="text-sm text-gray-500 mt-1">Variant: {item.variant}</p>}
+                                            {/* Display variant information properly */}
+                                            {item.variant && (
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span 
+                                                        className="w-4 h-4 rounded-full border"
+                                                        style={{ backgroundColor: item.variant.colorHex }}
+                                                        title={item.variant.color}
+                                                    ></span>
+                                                    <span className="text-gray-600 text-sm">{item.variant.color}</span>
+                                                    {item.size && (
+                                                        <span className="text-gray-600 text-sm">/ {item.size.size}</span>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between mt-2">
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => updateQuantity(item.product._id as string, item.quantity - 1)}
+                                                        onClick={() => updateQuantity(item.product._id as string, item.quantity - 1, item.variant, item.size)}
                                                         className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
                                                         disabled={item.quantity <= 1}
                                                     >
@@ -153,19 +181,21 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                                                     </button>
                                                     <span className="w-8 text-center">{item.quantity}</span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.product._id as string, item.quantity + 1)}
+                                                        onClick={() => updateQuantity(item.product._id as string, item.quantity + 1, item.variant, item.size)}
                                                         className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
                                                     >
                                                         <span className="text-lg">+</span>
                                                     </button>
                                                 </div>
-                                                <p className="font-semibold">₹{(item.product.basePrice * item.quantity).toFixed(2)}</p>
+                                                <p className="font-semibold">
+                                                    ₹{((item.size?.price || item.product.basePrice || 0) * item.quantity).toFixed(2)}
+                                                </p>
                                             </div>
                                         </div>
 
                                         {/* Remove Button */}
                                         <button
-                                            onClick={() => removeFromCart(item.product._id as string)}
+                                            onClick={() => removeFromCart(item.product._id as string, item.variant, item.size)}
                                             className="text-gray-400 hover:text-red-500 transition-colors"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -33,7 +33,6 @@ interface CategoryFormData {
   description: string;
 }
 
-
 type FormData = zodZ.infer<typeof productCreateSchema>;
 
 // Custom Dropzone Component
@@ -129,53 +128,57 @@ const ImageDropzone: React.FC<{
 };
 
 export default function AddProductPage() {
-  
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
-const {
-  register,
-  control,
-  handleSubmit,
-  formState: { errors, isSubmitting },
-  setValue,
-  watch,
-} = useForm<FormData>({
-  resolver: zodResolver(productCreateSchema),
-  defaultValues: {
-    name: "",
-    description: "",
-    category: "",
-    costPrice: 0,
-    basePrice: 0,
-    mainImage: [],
-    tags: [],
-    variants: [
-      {
-        color: "",
-        images: [],
-        options: [{ size: "", price: 0, quantity: 0, sku: "" }],
-      },
-    ],
-    availableQuantity: 0,
-    soldQuantity: 0,
-  },
-});
- 
-  // For variants
-const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
-  control,
-  name: "variants",
-});
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = useForm<FormData>({
+    resolver: zodResolver(productCreateSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      category: "",
+      costPrice: 0,
+      basePrice: 0,
+      mainImage: [],
+      tags: [],
+      variants: [
+        {
+          color: "",
+          images: [],
+          options: [{ size: "", price: 0, quantity: 0, sku: "" }],
+        },
+      ],
+    },
+  });
 
-// Sync with form
-useEffect(() => {
-  // Convert file objects to URLs or filenames if you’re uploading later
-  setValue("mainImage", selectedImages.map(file => file.name));
-}, [selectedImages, setValue]);
+  // For variants
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({
+    control,
+    name: "variants",
+  });
+
+  // Sync with form
+  useEffect(() => {
+    // Convert file objects to URLs or filenames if you’re uploading later
+    setValue(
+      "mainImage",
+      selectedImages.map((file) => file.name),
+    );
+  }, [selectedImages, setValue]);
 
   // Category form
   const {
@@ -202,8 +205,6 @@ useEffect(() => {
     fetchCategories();
   }, []);
 
- 
-
   const mutation = useMutation({
     mutationFn: async (data: TProductCreate) => {
       setIsLoading(true);
@@ -223,17 +224,13 @@ useEffect(() => {
       setValue("category", "");
       setValue("costPrice", 0);
       setValue("basePrice", 0);
-      setValue("soldQuantity", 0);
-      setValue("availableQuantity", 0);
       setValue("mainImage", []);
       setValue("variants", [
         {
           color: "",
           colorHex: "",
           images: [],
-          options: [
-            { size: "", price: 0, quantity: 0, sku: "" },
-          ],
+          options: [{ size: "", price: 0, quantity: 0, sku: "" }],
         },
       ]);
       setSelectedImages([]);
@@ -272,165 +269,168 @@ useEffect(() => {
       console.error("Error creating category:", error);
       alert(
         error.response?.data?.message ||
-          "Failed to create category. Please try again."
+          "Failed to create category. Please try again.",
       );
     },
   });
 
-const onSubmit = async (data: FormData) => {
-  try {
-    console.log("Form data before validation:", data);
-    
-    // Basic field validations
-    if (!data.name || data.name.trim() === "") {
-      alert("Product name is required.");
-      return;
-    }
-    
-    if (!data.description || data.description.trim() === "") {
-      alert("Product description is required.");
-      return;
-    }
-    
-    if (!data.category || data.category.trim() === "") {
-      alert("Product category is required.");
-      return;
-    }
-    
-    if (data.costPrice < 0) {
-      alert("Cost price must be zero or positive.");
-      return;
-    }
-    
-    if (data.basePrice < 0) {
-      alert("Base price must be zero or positive.");
-      return;
-    }
-    
-    // Validate variants explicitly
-    if (!data.variants || data.variants.length === 0) {
-      alert("At least one variant is required.");
-      return;
-    }
-    
-    // Validate each variant
-    for (let i = 0; i < data.variants.length; i++) {
-      const variant = data.variants[i];
-      if (!variant.color || variant.color.trim() === "") {
-        alert(`Variant ${i + 1}: Color is required.`);
+  const onSubmit = async (data: FormData) => {
+    try {
+      console.log("Form data before validation:", data);
+
+      // Basic field validations
+      if (!data.name || data.name.trim() === "") {
+        alert("Product name is required.");
         return;
       }
-      
-      if (!variant.options || variant.options.length === 0) {
-        alert(`Variant ${i + 1}: At least one size option is required.`);
+
+      if (!data.description || data.description.trim() === "") {
+        alert("Product description is required.");
         return;
       }
-      
-      // Validate each option in the variant
-      for (let j = 0; j < variant.options.length; j++) {
-        const option = variant.options[j];
-        if (!option.size || option.size.trim() === "") {
-          alert(`Variant ${i + 1}, Option ${j + 1}: Size is required.`);
+
+      if (!data.category || data.category.trim() === "") {
+        alert("Product category is required.");
+        return;
+      }
+
+      if (data.costPrice < 0) {
+        alert("Cost price must be zero or positive.");
+        return;
+      }
+
+      if (data.basePrice < 0) {
+        alert("Base price must be zero or positive.");
+        return;
+      }
+
+      // Validate variants explicitly
+      if (!data.variants || data.variants.length === 0) {
+        alert("At least one variant is required.");
+        return;
+      }
+
+      // Validate each variant
+      for (let i = 0; i < data.variants.length; i++) {
+        const variant = data.variants[i];
+        if (!variant.color || variant.color.trim() === "") {
+          alert(`Variant ${i + 1}: Color is required.`);
           return;
         }
-        
-        if (option.price < 0) {
-          alert(`Variant ${i + 1}, Option ${j + 1}: Price must be zero or positive.`);
+
+        if (!variant.options || variant.options.length === 0) {
+          alert(`Variant ${i + 1}: At least one size option is required.`);
           return;
         }
-        
-        if (option.quantity < 0) {
-          alert(`Variant ${i + 1}, Option ${j + 1}: Quantity must be zero or positive.`);
-          return;
-        }
-        
-        if (!option.sku || option.sku.trim() === "") {
-          alert(`Variant ${i + 1}, Option ${j + 1}: SKU is required.`);
-          return;
+
+        // Validate each option in the variant
+        for (let j = 0; j < variant.options.length; j++) {
+          const option = variant.options[j];
+          if (!option.size || option.size.trim() === "") {
+            alert(`Variant ${i + 1}, Option ${j + 1}: Size is required.`);
+            return;
+          }
+
+          if (option.price < 0) {
+            alert(
+              `Variant ${i + 1}, Option ${j + 1}: Price must be zero or positive.`,
+            );
+            return;
+          }
+
+          if (option.quantity < 0) {
+            alert(
+              `Variant ${i + 1}, Option ${j + 1}: Quantity must be zero or positive.`,
+            );
+            return;
+          }
+
+          if (!option.sku || option.sku.trim() === "") {
+            alert(`Variant ${i + 1}, Option ${j + 1}: SKU is required.`);
+            return;
+          }
         }
       }
-    }
-    
-    // First, validate the form data without images
-    const formDataWithoutImages = {
-      ...data,
-      mainImage: selectedImages.length > 0 ? ["temp"] : [] // Temporary value for validation
-    };
-    
-    const preValidationResult = productCreateSchema.safeParse(formDataWithoutImages);
-    if (!preValidationResult.success) {
-      console.error("Pre-validation errors:", preValidationResult.error);
-      
-      // Check if the error is related to images
-      const imageErrors = preValidationResult.error.issues.filter(issue => 
-        issue.path.includes("mainImage")
+
+      // First, validate the form data without images
+      const formDataWithoutImages = {
+        ...data,
+        mainImage: selectedImages.length > 0 ? ["temp"] : [], // Temporary value for validation
+      };
+
+      const preValidationResult = productCreateSchema.safeParse(
+        formDataWithoutImages,
       );
-      
-      if (imageErrors.length > 0 && selectedImages.length === 0) {
+      if (!preValidationResult.success) {
+        console.error("Pre-validation errors:", preValidationResult.error);
+
+        // Check if the error is related to images
+        const imageErrors = preValidationResult.error.issues.filter((issue) =>
+          issue.path.includes("mainImage"),
+        );
+
+        if (imageErrors.length > 0 && selectedImages.length === 0) {
+          alert("Please select at least one image for the product.");
+          return;
+        }
+
+        alert("Please check the form data and try again.");
+        return;
+      }
+
+      // If we get here, the form data is valid except for images
+      // Now handle image upload
+      if (selectedImages.length === 0) {
         alert("Please select at least one image for the product.");
         return;
       }
-      
-      alert("Please check the form data and try again.");
-      return;
+
+      let uploadedImageUrls: string[] = [];
+      const formData = new FormData();
+      formData.append("entityType", "products");
+
+      // Append each image file
+      selectedImages.forEach((image) => {
+        formData.append("gallery", image);
+      });
+
+      const uploadRes = await fetch("/api/upload-demo", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) throw new Error("Image upload failed");
+
+      const uploadResult = await uploadRes.json();
+      uploadedImageUrls = uploadResult.files?.gallery || [];
+
+      // Create final data with uploaded images
+      const finalData: TProductCreate = {
+        ...data,
+        mainImage: uploadedImageUrls,
+      };
+
+      console.log("Final data with uploaded images:", finalData);
+
+      // Validate the final data
+      const finalValidationResult = productCreateSchema.safeParse(finalData);
+      if (!finalValidationResult.success) {
+        console.error("Final validation errors:", finalValidationResult.error);
+        alert("Please check the form data and try again.");
+        return;
+      }
+      console.log("Final validated data ready for submission:", finalData);
+      // Submit the validated data
+      mutation.mutate(finalData);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to create product. Please try again.");
     }
-    
-    // If we get here, the form data is valid except for images
-    // Now handle image upload
-    if (selectedImages.length === 0) {
-      alert("Please select at least one image for the product.");
-      return;
-    }
-    
-    let uploadedImageUrls: string[] = [];
-    const formData = new FormData();
-    formData.append("entityType", "products");
-
-    // Append each image file
-    selectedImages.forEach((image) => {
-      formData.append("gallery", image);
-    });
-
-    const uploadRes = await fetch("/api/upload-demo", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!uploadRes.ok) throw new Error("Image upload failed");
-
-    const uploadResult = await uploadRes.json();
-    uploadedImageUrls = uploadResult.files?.gallery || [];
-
-    // Create final data with uploaded images
-    const finalData: TProductCreate = {
-      ...data,
-      mainImage: uploadedImageUrls,
-    };
-
-    console.log("Final data with uploaded images:", finalData);
-    
-    // Validate the final data
-    const finalValidationResult = productCreateSchema.safeParse(finalData);
-    if (!finalValidationResult.success) {
-      console.error("Final validation errors:", finalValidationResult.error);
-      alert("Please check the form data and try again.");
-      return;
-    }
-
-    // Submit the validated data
-    mutation.mutate(finalData);
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    alert("Failed to create product. Please try again.");
-  }
-};
-
+  };
 
   const onSubmitCategory = (data: CategoryFormData) => {
     categoryMutation.mutate(data);
   };
-
-
 
   // Convert categories to options format for Select component
   const categoryOptions = categories.map((category) => ({
@@ -445,7 +445,7 @@ const onSubmit = async (data: FormData) => {
       <form
         className="flex flex-col gap-10"
         onSubmit={handleSubmit(onSubmit, (err) =>
-          console.log("Validation errors:", err)
+          console.log("Validation errors:", err),
         )}
       >
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -559,40 +559,6 @@ const onSubmit = async (data: FormData) => {
                   </p>
                 )}
               </div>
-
-              <div className="flex flex-col">
-                <Label htmlFor="soldQuantity">Sold Quantity</Label>
-                <Input
-                  id="soldQuantity"
-                  type="number"
-                  step="1"
-                  {...register("soldQuantity", { valueAsNumber: true })}
-                  placeholder="0"
-                  className={errors.soldQuantity ? "border-red-500" : ""}
-                />
-                {errors.soldQuantity && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.soldQuantity.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col">
-                <Label htmlFor="availableQuantity">Available Quantity</Label>
-                <Input
-                  id="availableQuantity"
-                  type="number"
-                  step="1"
-                  {...register("availableQuantity", { valueAsNumber: true })}
-                  placeholder="0"
-                  className={errors.availableQuantity ? "border-red-500" : ""}
-                />
-                {errors.availableQuantity && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.availableQuantity.message}
-                  </p>
-                )}
-              </div>
             </div>
           </ComponentCard>
         </div>
@@ -614,52 +580,51 @@ const onSubmit = async (data: FormData) => {
         {/* Variants */}
         <ComponentCard title="Product Variants">
           <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="category">Variant</Label>
-                  <button
-                    type="button"
-                     onClick={() =>
-          appendVariant({
-            color: "",
-            colorHex: "",
-            
-            images: [],
-            options: [{ size: "", price: 0, quantity: 0, sku: "" }],
-          })
-        }
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M12 3.75C12.4142 3.75 12.75 4.08579 12.75 4.5V11.25H19.5C19.9142 11.25 20.25 11.5858 20.25 12C20.25 12.4142 19.9142 12.75 19.5 12.75H12.75V19.5C12.75 19.9142 12.4142 20.25 12 20.25C11.5858 20.25 11.25 19.9142 11.25 19.5V12.75H4.5C4.08579 12.75 3.75 12.4142 3.75 12C3.75 11.5858 4.08579 11.25 4.5 11.25H11.25V4.5C11.25 4.08579 11.5858 3.75 12 3.75Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Add Variant
-                  </button>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="category">Variant</Label>
+              <button
+                type="button"
+                onClick={() =>
+                  appendVariant({
+                    color: "",
+                    colorHex: "",
 
-      {/* Loop through Variants */}
-     
-      {variantFields.map((field, index) => (
-       <VariantFields
-    key={field.id}
-    control={control}
-    register={register}
-    variantIndex={index}
-    removeVariant={() => removeVariant(index)}
-  />
-      ))}
+                    images: [],
+                    options: [{ size: "", price: 0, quantity: 0, sku: "" }],
+                  })
+                }
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 3.75C12.4142 3.75 12.75 4.08579 12.75 4.5V11.25H19.5C19.9142 11.25 20.25 11.5858 20.25 12C20.25 12.4142 19.9142 12.75 19.5 12.75H12.75V19.5C12.75 19.9142 12.4142 20.25 12 20.25C11.5858 20.25 11.25 19.9142 11.25 19.5V12.75H4.5C4.08579 12.75 3.75 12.4142 3.75 12C3.75 11.5858 4.08579 11.25 4.5 11.25H11.25V4.5C11.25 4.08579 11.5858 3.75 12 3.75Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                Add Variant
+              </button>
+            </div>
 
-         
+            {/* Loop through Variants */}
+
+            {variantFields.map((field, index) => (
+              <VariantFields
+                key={field.id}
+                control={control}
+                register={register}
+                variantIndex={index}
+                removeVariant={() => removeVariant(index)}
+              />
+            ))}
+
             {errors.variants && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.variants.message}

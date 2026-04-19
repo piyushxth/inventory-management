@@ -25,7 +25,21 @@ const fetchProducts = async () => {
 };
 
 const columns: AdminTableColumn<any>[] = [
-  { header: "Name", accessor: "name" },
+  {
+    header: "Name",
+    render: (row) => (
+      <div className="flex items-center gap-3">
+        <img
+          src={row.mainImage?.[0] || "/placeholder.png"}
+          alt={row.name}
+          className="w-10 h-10 object-cover rounded-md"
+        />
+        <span className="font-medium text-gray-800 dark:text-gray-200">
+          {row.name}
+        </span>
+      </div>
+    ),
+  },
   {
     header: "Category",
     render: (row) =>
@@ -35,12 +49,11 @@ const columns: AdminTableColumn<any>[] = [
   },
   { header: "Cost Price", accessor: "costPrice" },
   { header: "Base Price", accessor: "basePrice" },
-  { header: "Available Qty", accessor: "availableQuantity" },
 ];
 
 export default function ProductsPage() {
   const [dropdownOpen, setDropdownOpen] = useState<string | number | null>(
-    null
+    null,
   );
   const [selectedProducts, setSelectedProducts] = useState<ProductWithId[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,7 +70,7 @@ export default function ProductsPage() {
     (item: IProduct) => ({
       ...item,
       id: item._id,
-    })
+    }),
   );
 
   const handleEdit = (productId: string) => {
@@ -90,7 +103,7 @@ export default function ProductsPage() {
 
     if (
       !confirm(
-        `Are you sure you want to delete ${selectedProducts.length} product(s)?`
+        `Are you sure you want to delete ${selectedProducts.length} product(s)?`,
       )
     ) {
       return;

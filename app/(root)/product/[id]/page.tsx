@@ -5,13 +5,33 @@ import ProductFeatures from "@/components/client/ProductFeatures";
 import { IProduct } from "@/libs/models/product";
 import connectMongoDB from "@/libs/connnectMongoDB";
 import { Product } from "@/libs/models/product";
-import AddToCartButton from "@/components/client/AddToCartButton"; // Import the new client component
+import { Variant, IVariant } from "@/libs/models/variant"; // Import the Variant model
+import AddToCartButton from "@/components/client/AddToCartButton";
+import ProductVariantSelector from "@/components/client/ProductVariantSelector";
 
-// Function to fetch product data
+// Function to fetch product data with populated variants
 async function getProduct(id: string) {
   await connectMongoDB();
-  const product = await Product.findById(id).populate("category", "name");
-  return JSON.parse(JSON.stringify(product));
+  // First get the product
+  const productDoc = await Product.findById(id).populate("category", "name");
+  
+  if (!productDoc) {
+    return null;
+  }
+  
+  // Then get the variants
+  const variantIds = productDoc.variants;
+  const variants = await Variant.find({ _id: { $in: variantIds } });
+  
+  // Combine the product with its variants
+  const product = productDoc.toObject();
+  // Create a new object with the correct type
+  const populatedProduct: any = {
+    ...product,
+    variants: variants.map(v => v.toObject())
+  };
+  
+  return JSON.parse(JSON.stringify(populatedProduct));
 }
 
 // Function to validate and filter image URLs
@@ -28,9 +48,10 @@ function validateImages(images: string[]): string[] {
   });
 }
 
-const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+const ProductPage = async ({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
   const productId = (await params).id;
-  const product: IProduct = await getProduct(productId);
+  const { variant, size } = await searchParams;
+  const product: any | null = await getProduct(productId);
 
   // If product not found, return a simple not found message
   if (!product) {
@@ -41,14 +62,25 @@ const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
-  // Get all images from product variants and main image, and validate them
-  const allImages = [
-    ...validateImages(product.mainImage),
-    ...(product.variants?.flatMap(variant => validateImages(variant.images)) || [])
-  ];
+  // Get images based on selected variant
+  let productImages = [...validateImages(product.mainImage)];
+  
+  if (variant) {
+    // If a variant is selected, show images from that variant
+    const selectedVariant = product.variants.find((v: any) => v.colorHex === variant);
+    if (selectedVariant && selectedVariant.images) {
+      productImages = [...validateImages(selectedVariant.images)];
+    }
+  } else if (product.variants && product.variants.length > 0) {
+    // If no variant is selected, show images from the first variant
+    const firstVariant = product.variants[0];
+    if (firstVariant.images) {
+      productImages = [...validateImages(firstVariant.images)];
+    }
+  }
 
   // Remove duplicates
-  const uniqueImages = [...new Set(allImages)];
+  const uniqueImages = [...new Set(productImages)];
 
   return (
     <>
@@ -68,7 +100,7 @@ const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
             </li>
             <li className="mt-2 min-h-[22px] ">
               <div className="flex justify-left mb-[5px] flex-wrap items-start">
-                {product.category && (product.category as any).name}
+                {product.category && product.category.name}
               </div>
             </li>
             <li className="flex flex-col flex-wrap mt-[4px] lg:mt-auto gap-2 items-start justify-between">
@@ -81,19 +113,7 @@ const ProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
             </li>
             {product.variants && product.variants.length > 0 && (
               <li className="flex flex-col gap-2 mt-4">
-                <div className="flex gap-2">
-                  {product.variants.map((variant, index) => (
-                    <div 
-                      key={index}
-                      className="relative bg-black w-5 h-5 rounded-[2px] border outline-offset-2 outline-[0.5px] outline-transparent"
-                      style={{ backgroundColor: variant.colorHex }}
-                      title={variant.color}
-                    ></div>
-                  ))}
-                </div>
-                <span className="text-xs">
-                  {product.variants.length} {product.variants.length === 1 ? 'Color' : 'Colors'} Available
-                </span>
+                <ProductVariantSelector product={product} selectedVariant={variant as string | undefined} />
               </li>
             )}
             <li className="flex flex-col gap-2 mt-[40px]">

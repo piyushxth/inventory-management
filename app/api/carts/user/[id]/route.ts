@@ -57,7 +57,7 @@ export async function POST(
         // Check if we're adding a single product or updating entire cart
         if (body.product) {
             // Adding a single product to cart
-            const { product, quantity = 1 } = body;
+            const { product, quantity = 1, variant, size } = body;
 
             let cart = await Cart.findOne({ user: id });
 
@@ -65,19 +65,80 @@ export async function POST(
                 // Create new cart
                 cart = await Cart.create({
                     user: id,
-                    items: [{ product: product._id || product, quantity }],
+                    items: [{
+                        product: product._id || product,
+                        quantity,
+                        variant: variant ? {
+                            color: variant.color,
+                            colorHex: variant.colorHex,
+                            images: variant.images
+                        } : undefined,
+                        size: size ? {
+                            size: size.size,
+                            price: size.price,
+                            quantity: size.quantity,
+                            sku: size.sku
+                        } : undefined
+                    }],
                 });
                 await cart.populate("items.product");
             } else {
-                // Check if product already exists in cart
+                // Prepare item data
+                const itemData = {
+                    product: product._id || product,
+                    quantity,
+                    variant: variant ? {
+                        color: variant.color,
+                        colorHex: variant.colorHex,
+                        images: variant.images
+                    } : undefined,
+                    size: size ? {
+                        size: size.size,
+                        price: size.price,
+                        quantity: size.quantity,
+                        sku: size.sku
+                    } : undefined
+                };
+
+                // Check if product with same variant/size already exists in cart
                 const existingItemIndex = cart.items.findIndex(
-                    (item: any) => item.product.toString() === (product._id || product).toString()
+                    (item: any) => {
+                        // Compare product ID
+                        if (item.product.toString() !== (product._id || product).toString()) {
+                            return false;
+                        }
+                        
+                        // Compare variant
+                        if (variant) {
+                            if (!item.variant || item.variant.colorHex !== variant.colorHex) {
+                                return false;
+                            }
+                        } else if (item.variant) {
+                            return false;
+                        }
+                        
+                        // Compare size
+                        if (size) {
+                            if (!item.size || item.size.size !== size.size) {
+                                return false;
+                            }
+                        } else if (item.size) {
+                            return false;
+                        }
+                        
+                        return true;
+                    }
                 );
 
                 if (existingItemIndex > -1) {
                     // Update quantity using atomic operation
                     cart = await Cart.findOneAndUpdate(
-                        { user: id, "items.product": product._id || product },
+                        { 
+                            user: id, 
+                            "items.product": product._id || product,
+                            ...(variant ? { "items.variant.colorHex": variant.colorHex } : { "items.variant": { $exists: false } }),
+                            ...(size ? { "items.size.size": size.size } : { "items.size": { $exists: false } })
+                        },
                         { $inc: { "items.$.quantity": quantity } },
                         { new: true }
                     ).populate("items.product");
@@ -85,7 +146,7 @@ export async function POST(
                     // Add new item using atomic operation
                     cart = await Cart.findOneAndUpdate(
                         { user: id },
-                        { $push: { items: { product: product._id || product, quantity } } },
+                        { $push: { items: itemData } },
                         { new: true }
                     ).populate("items.product");
                 }
@@ -101,11 +162,26 @@ export async function POST(
             );
         } else if (body.items) {
             // Updating entire cart
-            const { items } = body;
+            // Process items to extract only product IDs and preserve variant/size info
+            const processedItems = body.items.map((item: any) => ({
+                product: item.product._id || item.product,
+                quantity: item.quantity,
+                variant: item.variant ? {
+                    color: item.variant.color,
+                    colorHex: item.variant.colorHex,
+                    images: item.variant.images
+                } : undefined,
+                size: item.size ? {
+                    size: item.size.size,
+                    price: item.size.price,
+                    quantity: item.size.quantity,
+                    sku: item.size.sku
+                } : undefined
+            }));
 
             let cart = await Cart.findOneAndUpdate(
                 { user: id },
-                { $set: { items } },
+                { $set: { items: processedItems } },
                 { new: true, upsert: true }
             ).populate("items.product");
 

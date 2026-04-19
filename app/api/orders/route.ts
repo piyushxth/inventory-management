@@ -122,6 +122,48 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Add PATCH method to update order status
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const updateData = await req.json();
+    
+    await connectMongoDB();
+    
+    // Update the order with provided data
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
+    
+    if (!updatedOrder) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Order updated successfully",
+        data: updatedOrder,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Order update error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "An unexpected error occurred",
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET() {
   try {
     await connectMongoDB();

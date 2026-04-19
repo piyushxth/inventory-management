@@ -49,6 +49,7 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [useSameAddress, setUseSameAddress] = useState(true);
+  const [esewaOrderId, setEsewaOrderId] = useState(""); // To store the order ID for eSewa
 
   const [form, setForm] = useState({
     name: "",
@@ -62,7 +63,7 @@ export default function Checkout() {
     billingCity: "",
     billingAddress: "",
     billingLandmark: "",
-    paymentMethod: "COD" as "COD" | "Online",
+    paymentMethod: "COD" as "COD" | "Online" | "Esewa",
     orderNote: "",
   });
 
@@ -140,23 +141,110 @@ export default function Checkout() {
         orderNote: form.orderNote,
       };
       
-      const res = await fetch("/api/orders", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(order) 
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        await clearCart();
-        router.push(`/checkout/order-success?orderId=${data.data._id}`);
+      // For eSewa payment, we need to create the order first but mark it as unpaid
+      if (form.paymentMethod === "Esewa") {
+        // Set payment status to unpaid initially
+        const orderWithStatus = {
+          ...order,
+          paymentStatus: "Unpaid"
+        };
+        
+        const res = await fetch("/api/orders", { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify(orderWithStatus) 
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          // Store the order ID for eSewa payment
+          setEsewaOrderId(data.data._id);
+          
+          // Redirect to eSewa payment page
+          initiateEsewaPayment(data.data._id, total);
+        } else {
+          setError(data.message || "Failed to create order");
+          setIsSubmitting(false);
+        }
       } else {
-        setError(data.message || "Failed to create order");
+        // For COD, proceed as before
+        const res = await fetch("/api/orders", { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify(order) 
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          await clearCart();
+          router.push(`/checkout/order-success?orderId=${data.data._id}`);
+        } else {
+          setError(data.message || "Failed to create order");
+          setIsSubmitting(false);
+        }
       }
     } catch (err) {
       console.error("Order submission error:", err);
       setError("An error occurred while processing your order");
-    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Function to initiate eSewa payment
+  const initiateEsewaPayment = (orderId: string, amount: number) => {
+    console.log("Initiating eSewa payment with:", {
+      orderId,
+      amount,
+      NEXT_PUBLIC_ESEWA_PAYMENT_URL: process.env.NEXT_PUBLIC_ESEWA_PAYMENT_URL,
+      NEXT_PUBLIC_ESEWA_MERCHANT_ID: process.env.NEXT_PUBLIC_ESEWA_MERCHANT_ID,
+      windowLocationOrigin: typeof window !== 'undefined' ? window.location.origin : 'unknown'
+    });
+    
+    try {
+      // Create a form to submit to eSewa
+      const form = document.createElement('form');
+      form.method = 'POST';
+      
+      // Use environment variable or fallback to default UAT URL
+      const paymentUrl = process.env.NEXT_PUBLIC_ESEWA_PAYMENT_URL || 'https://uat.esewa.com.np/epay/main';
+      form.action = paymentUrl;
+      
+      // Log the action URL for debugging
+      console.log("eSewa form action URL:", form.action);
+      
+      // Add eSewa required fields
+      const fields = {
+        amt: amount,
+        psc: 0,
+        pdc: 0,
+        txAmt: 0,
+        tAmt: amount,
+        pid: orderId,
+        scd: process.env.NEXT_PUBLIC_ESEWA_MERCHANT_ID || 'EPAYTEST',
+        su: `${window.location.origin}/checkout/esewa-success`,
+        fu: `${window.location.origin}/checkout/esewa-failure`
+      };
+      
+      console.log("eSewa form fields:", fields);
+      
+      // Add hidden input fields
+      Object.keys(fields).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key as keyof typeof fields].toString();
+        form.appendChild(input);
+      });
+      
+      document.body.appendChild(form);
+      
+      // Log form HTML for debugging
+      console.log("eSewa form HTML:", form.outerHTML);
+      
+      form.submit();
+    } catch (error) {
+      console.error("Error initiating eSewa payment:", error);
+      setError("Failed to initiate eSewa payment. Please try again or contact support.");
       setIsSubmitting(false);
     }
   };
@@ -292,8 +380,12 @@ export default function Checkout() {
                   <label htmlFor="cod" className="text-sm font-medium">Cash on Delivery (COD)</label>
                 </div>
                 <div className="flex items-center">
+                  <input type="radio" id="esewa" name="paymentMethod" value="Esewa" checked={form.paymentMethod === "Esewa"} onChange={handleChange} className="w-4 h-4 mr-2" />
+                  <label htmlFor="esewa" className="text-sm font-medium">eSewa</label>
+                </div>
+                <div className="flex items-center">
                   <input type="radio" id="online" name="paymentMethod" value="Online" checked={form.paymentMethod === "Online"} onChange={handleChange} className="w-4 h-4 mr-2" disabled />
-                  <label htmlFor="online" className="text-sm font-medium text-gray-400">Online Payment (Coming Soon)</label>
+                  <label htmlFor="online" className="text-sm font-medium text-gray-400">Other Online Payment (Coming Soon)</label>
                 </div>
               </div>
             </div>
@@ -305,13 +397,29 @@ export default function Checkout() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-xl border bg-white p-6 shadow-sm">
+            <div className="sticky top-10 rounded-xl border bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">Order Summary</h2>
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item: CartItem) => (
                   <div key={item.product._id} className="flex gap-4">
                     <div className="w-16 h-16 flex-shrink-0 relative">
-                      <Image src={item.product.mainImage[0] || "/placeholder.jpg"} alt={item.product.name} fill sizes="64px" className="object-cover" />
+                      <Image 
+                                              src={
+                                                item.product.variants && item.product.variants.length > 0 && 
+                                                (item.product.variants[0] as any).images && (item.product.variants[0] as any).images.length > 0 ?
+                                                  (item.product.variants[0] as any).images[0] :
+                                                  item.product.mainImage[0] || "/placeholder.jpg"
+                                              } 
+                                              alt={item.product.name} 
+                                              fill 
+                                              sizes="64px" 
+                                              className="object-cover"
+                                              onError={(e) => {
+                                                // Fallback to placeholder if image fails to load
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = "/placeholder.jpg";
+                                              }}
+                                            />
                       <span className="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{item.quantity}</span>
                     </div>
                     <div className="flex-1">

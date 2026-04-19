@@ -2,20 +2,24 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useSession } from "next-auth/react";
-import { IProduct } from "@/libs/models/product";
+import { IProduct, IPopulatedProduct } from "@/libs/models/product";
+
+// Create a union type that accepts both regular and populated products
+type ProductType = IProduct | IPopulatedProduct;
 
 export interface CartItem {
-  product: IProduct;
+  product: ProductType;
   quantity: number;
-  variant?: string;
+  variant?: any;
+  size?: any;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
-  addToCart: (product: IProduct, quantity?: number) => Promise<void>;
-  removeFromCart: (productId: string) => Promise<void>;
-  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  addToCart: (product: ProductType, quantity?: number, variant?: any, size?: any) => Promise<void>;
+  removeFromCart: (productId: string, variant?: any, size?: any) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number, variant?: any, size?: any) => Promise<void>;
   clearCart: () => Promise<void>;
   isLoading: boolean;
 }
@@ -77,12 +81,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const newTimeout = setTimeout(async () => {
       if (session?.user?.id) {
         try {
+          // For full cart updates, send all items
+          const apiItems = items.map(item => ({
+            product: item.product._id,
+            quantity: item.quantity,
+            variant: item.variant,
+            size: item.size
+          }));
+          
           await fetch(`/api/carts/user/${session.user.id}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ items }),
+            body: JSON.stringify({ items: apiItems }),
           });
         } catch (error) {
           console.error("Error syncing cart with server:", error);
@@ -93,33 +105,45 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setSyncTimeout(newTimeout);
   };
 
-  const addToCart = async (product: IProduct, quantity: number = 1) => {
+  const addToCart = async (product: ProductType, quantity: number = 1, variant?: any, size?: any) => {
     setIsLoading(true);
     try {
       // Update UI immediately for responsiveness
       setCartItems(prevItems => {
-        const existingItem = prevItems.find(item => item.product._id === product._id);
+        // Create a unique key for the cart item based on product, variant, and size
+        const itemKey = `${product._id}-${variant?.colorHex || ''}-${size?.size || ''}`;
+        
+        const existingItem = prevItems.find(item => {
+          const existingItemKey = `${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`;
+          return existingItemKey === itemKey;
+        });
         
         if (existingItem) {
-          return prevItems.map(item =>
-            item.product._id === product._id
+          return prevItems.map(item => {
+            const existingItemKey = `${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`;
+            return existingItemKey === itemKey
               ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
+              : item;
+          });
         } else {
-          return [...prevItems, { product, quantity }];
+          return [...prevItems, { product, quantity, variant, size }];
         }
       });
       
-      // For logged-in users, sync with server (debounced)
+      // For logged-in users, sync with server
       if (session?.user?.id) {
-        // Wait a bit for state to update, then sync
-        setTimeout(() => {
-          setCartItems(currentItems => {
-            debouncedSyncWithServer(currentItems);
-            return currentItems;
+        try {
+          // For single product additions, send just the product data
+          await fetch(`/api/carts/user/${session.user.id}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ product: product._id, quantity, variant, size }),
           });
-        }, 0);
+        } catch (error) {
+          console.error("Error adding product to cart:", error);
+        }
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -128,16 +152,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const removeFromCart = async (productId: string) => {
+  const removeFromCart = async (productId: string, variant?: any, size?: any) => {
     setIsLoading(true);
     try {
       setCartItems(prevItems => {
-        const updatedItems = prevItems.filter(item => item.product._id !== productId);
-        // Sync with server if logged in (debounced)
-        if (session?.user?.id) {
-          debouncedSyncWithServer(updatedItems);
+        // If variant and size are provided, remove only that specific variant
+        if (variant || size) {
+          const filteredItems = prevItems.filter(item => {
+            // Create a unique key for comparison
+            const itemKey = `${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`;
+            const targetKey = `${productId}-${variant?.colorHex || ''}-${size?.size || ''}`;
+            
+            return itemKey !== targetKey;
+          });
+          
+          // Sync with server if logged in (debounced)
+          if (session?.user?.id) {
+            debouncedSyncWithServer(filteredItems);
+          }
+          return filteredItems;
+        } else {
+          // If no variant specified, remove all instances of the product
+          const updatedItems = prevItems.filter(item => item.product._id !== productId);
+          // Sync with server if logged in (debounced)
+          if (session?.user?.id) {
+            debouncedSyncWithServer(updatedItems);
+          }
+          return updatedItems;
         }
-        return updatedItems;
       });
     } catch (error) {
       console.error("Error removing from cart:", error);
@@ -146,18 +188,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateQuantity = async (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number, variant?: any, size?: any) => {
     if (quantity <= 0) {
-      await removeFromCart(productId);
+      await removeFromCart(productId, variant, size);
       return;
     }
     
     setIsLoading(true);
     try {
       setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.product._id === productId ? { ...item, quantity } : item
-        )
+        prevItems.map(item => {
+          // Create a unique key for comparison
+          const itemKey = `${item.product._id}-${item.variant?.colorHex || ''}-${item.size?.size || ''}`;
+          const targetKey = `${productId}-${variant?.colorHex || ''}-${size?.size || ''}`;
+          
+          return itemKey === targetKey ? { ...item, quantity } : item;
+        })
       );
       
       // Sync with server if logged in (debounced)

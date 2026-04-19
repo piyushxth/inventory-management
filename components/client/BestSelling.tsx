@@ -7,18 +7,12 @@ import { Navigation } from "swiper/modules";
 import ProductCard from "./ProductCard";
 import { IProduct } from "@/libs/models/product";
 
-const images = [
-  "/client/product/f1.jpg",
-  "/client/product/f2.jpg",
-  "/client/product/f3.jpg",
-  "/client/product/f4.jpg",
-  "/client/product/product1.webp",
-];
 interface BestSellingProps {
   products: IProduct[];
 }
 
 const BestSelling = ({ products }: BestSellingProps) => {
+  console.log("BestSelling component received products:", products);
   useEffect(() => {
     const swiper = new Swiper(".best-selling-swiper", {
       modules: [Navigation],

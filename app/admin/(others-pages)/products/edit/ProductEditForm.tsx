@@ -63,14 +63,14 @@ const ImageDropzone: React.FC<{
 
   const removeNewImage = (index: number) => {
     const updatedNewImages = newImageFiles.filter(
-      (_: File, i: number) => i !== index
+      (_: File, i: number) => i !== index,
     );
     onNewImagesChange(updatedNewImages);
   };
 
   const removeExistingImage = (index: number) => {
     const newExistingImages = existingImages.filter(
-      (_: string, i: number) => i !== index
+      (_: string, i: number) => i !== index,
     );
     onExistingImagesChange(newExistingImages);
   };
@@ -184,7 +184,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
-    product.mainImage || []
+    product.mainImage || [],
   );
   const [newImages, setNewImages] = useState<File[]>([]);
 
@@ -279,7 +279,7 @@ const ProductEditForm = ({ product }: { product: TProductCreate }) => {
         try {
           const response = await axios.put(
             `/api/products/${data._id}`,
-            finalData
+            finalData,
           );
           console.log("API response:", response);
           if (response.data.success) {

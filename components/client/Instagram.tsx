@@ -17,7 +17,7 @@ const Instagram = () => {
     async function getInstagramData() {
       try {
         const res = await fetch(
-          `https://graph.instagram.com/me/media?fields=id,media_url,permalink&access_token=IGAAnZBIAD4guVBZAFE5VS1yTElVZAmtiTVB4WWprWHRXZAmJoZAWtNWTJZAU3lpR1ZA1ZAmMtWTluaWhEbmtncjBpTXdVQklQZAnVUY2NFYnNmSWpVYURrMTAzOExaQWxkdEdQMnFna3NpVlJ3WDUyazdZAQkdmSnVCVTloMzQtcUVDWUdodwZDZD`
+          `https://graph.instagram.com/me/media?fields=id,media_url,permalink&access_token=IGAAnZBIAD4guVBZAGJqUzA3Mmt6SDIxd0NIMDhYQXBiOTRnLWR0bWY5YmVyczQwY0ZAwQUQweWVNMVFGRjVnUS1FSEZAsVnNuQ1otTnB1R2E0WGtEZAk12aDhJMXVxZAmEwS2tKUV94M3FsTnhiNEgtM2VHYjg2V2tHOF9qWmo0VnJyNAZDZD`
         );
         const data = await res.json();
         console.log("Instagram Data:", data);

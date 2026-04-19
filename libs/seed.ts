@@ -12,6 +12,7 @@ import { seedAddress } from "./seeders/addressSeeder";
 import { seedWishlist } from "./seeders/wishlistSeeder";
 import { seedCart } from "./seeders/cartSeeder";
 import { seedProduct } from "./seeders/productSeeder";
+import { seedVariant } from "./seeders/variantSeeder";
 
 async function runSeeders() {
   try {
@@ -37,6 +38,10 @@ async function runSeeders() {
     console.log("\nSeeding products...");
     await seedProduct();
 
+    // Seed variants (depends on products)
+    // console.log("\nSeeding variants...");
+    // await seedVariant();
+
     // Seed coupons (no dependencies)
     console.log("\nSeeding coupons...");
     await seedCoupon();
@@ -58,8 +63,8 @@ async function runSeeders() {
     await seedWishlist();
 
     // Seed carts (depends on users and products, but uses placeholder IDs)
-    console.log("\nSeeding carts...");
-    await seedCart();
+    // console.log("\nSeeding carts...");
+    // await seedCart();
 
     console.log("\nDatabase seeding completed successfully!");
   } catch (error) {

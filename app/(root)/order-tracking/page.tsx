@@ -175,9 +175,19 @@ export default function OrderTracking() {
                   <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                     {item.product?.mainImage?.[0] ? (
                       <img 
-                        src={item.product.mainImage[0]} 
+                        src={
+                          item.product.variants && item.product.variants.length > 0 && 
+                          (item.product.variants[0] as any).images && (item.product.variants[0] as any).images.length > 0 ?
+                            (item.product.variants[0] as any).images[0] :
+                            item.product.mainImage[0]
+                        } 
                         alt={item.product.name} 
                         className="w-full h-full object-cover rounded-lg"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.jpg";
+                        }}
                       />
                     ) : (
                       <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

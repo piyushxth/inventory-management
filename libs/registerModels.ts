@@ -10,6 +10,10 @@ export const registerModels = () => {
   mongoose.models.Category ||
     (mongoose.model("Category", require("./models/category").categorySchema),
     console.log("Category model registered successfully."));
+
+  mongoose.models.Variant ||
+    (mongoose.model("Variant", require("./models/variant").variantSchema),
+    console.log("Variant model registered successfully."));
 };
 
 // Export the models to use in other parts of the app

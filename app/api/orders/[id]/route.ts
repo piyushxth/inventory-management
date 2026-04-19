@@ -91,6 +91,46 @@ export async function PUT(
   }
 }
 
+// Add PATCH method for partial updates
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id = (await params).id;
+  try {
+    const updateData = await req.json();
+    await connectMongoDB();
+    
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    ).populate("items.product");
+    
+    if (!updatedOrder) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Order updated successfully",
+        data: updatedOrder,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to update order" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

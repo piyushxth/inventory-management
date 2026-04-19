@@ -9,6 +9,9 @@ import { Variant, IVariant } from "@/libs/models/variant"; // Import the Variant
 import AddToCartButton from "@/components/client/AddToCartButton";
 import ProductVariantSelector from "@/components/client/ProductVariantSelector";
 
+// PDP fetches live data from MongoDB, so opt out of build-time prerender.
+export const dynamic = "force-dynamic";
+
 // Function to fetch product data with populated variants
 async function getProduct(id: string) {
   await connectMongoDB();

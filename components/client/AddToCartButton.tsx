@@ -1,9 +1,9 @@
 "use client";
 
 import { IPopulatedProduct } from "@/libs/models/product";
+import { IVariant, ISizeOption } from "@/libs/models/variant";
 import { useCart } from "./CartContext";
 import { useState, useEffect } from "react";
-import { url } from "inspector";
 
 interface AddToCartButtonProps {
   product: IPopulatedProduct;
@@ -14,57 +14,37 @@ const AddToCartButton = ({ product }: AddToCartButtonProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedVariantObj, setSelectedVariantObj] = useState<any>(null);
-  const [sizeOption, setSizeOption] = useState<any>(null);
+  const [selectedVariantObj, setSelectedVariantObj] = useState<IVariant | null>(
+    null
+  );
+  const [sizeOption, setSizeOption] = useState<ISizeOption | null>(null);
 
-  // Get URL parameters
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const variantParam = urlParams.get("variant");
-      const sizeParam = urlParams.get("size");
-
-      if (variantParam) {
-        setSelectedVariant(variantParam);
-      }
-
-      if (sizeParam) {
-        setSelectedSize(sizeParam);
-      }
-    }
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const variantParam = urlParams.get("variant");
+    const sizeParam = urlParams.get("size");
+    if (variantParam) setSelectedVariant(variantParam);
+    if (sizeParam) setSelectedSize(sizeParam);
   }, []);
 
-  // Update variant object and size option when variant or size changes
   useEffect(() => {
     if (selectedVariant) {
-      const variant = product.variants.find(
-        (v: any) => (v as any).colorHex === selectedVariant,
-      );
-      setSelectedVariantObj(variant || null);
-
+      const variant =
+        product.variants.find((v) => v.colorHex === selectedVariant) || null;
+      setSelectedVariantObj(variant);
       if (variant && selectedSize) {
-        const option = (variant as any).options.find(
-          (o: any) => o.size === selectedSize,
+        setSizeOption(
+          variant.options.find((o) => o.size === selectedSize) || null
         );
-        setSizeOption(option || null);
       } else {
         setSizeOption(null);
       }
-    } else {
-      // If no variant selected, use the first variant as default
-      if (product.variants && product.variants.length > 0) {
-        const firstVariant = product.variants[0];
-        setSelectedVariantObj(firstVariant);
-
-        // If no size selected, use the first size option of the first variant
-        if (
-          (firstVariant as any).options &&
-          (firstVariant as any).options.length > 0 &&
-          !selectedSize
-        ) {
-          const firstOption = (firstVariant as any).options[0];
-          setSizeOption(firstOption);
-        }
+    } else if (product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      setSelectedVariantObj(firstVariant);
+      if (firstVariant.options && firstVariant.options.length > 0 && !selectedSize) {
+        setSizeOption(firstVariant.options[0]);
       }
     }
   }, [selectedVariant, selectedSize, product.variants]);
@@ -72,40 +52,27 @@ const AddToCartButton = ({ product }: AddToCartButtonProps) => {
   const handleAddToCart = async () => {
     setIsAdding(true);
     try {
-      // Pass the selected variant and size information to the cart
       if (selectedVariantObj && sizeOption) {
         await addToCart(product, 1, selectedVariantObj, sizeOption);
       } else if (selectedVariantObj) {
-        // If we have a variant but no size (shouldn't happen with current setup, but just in case)
-        await addToCart(product, 1, selectedVariantObj, null);
-      } else {
-        // If no variant selected, use the first variant as default
-        if (product.variants && product.variants.length > 0) {
-          const firstVariant = product.variants[0];
-          if (
-            (firstVariant as any).options &&
-            (firstVariant as any).options.length > 0
-          ) {
-            await addToCart(
-              product,
-              1,
-              firstVariant,
-              (firstVariant as any).options[0],
-            );
-          } else {
-            await addToCart(product, 1, firstVariant, null);
-          }
+        await addToCart(product, 1, selectedVariantObj);
+      } else if (product.variants && product.variants.length > 0) {
+        const firstVariant = product.variants[0];
+        const firstOption = firstVariant.options?.[0];
+        if (firstOption) {
+          await addToCart(product, 1, firstVariant, firstOption);
         } else {
-          await addToCart(product, 1);
+          await addToCart(product, 1, firstVariant);
         }
+      } else {
+        await addToCart(product, 1);
       }
     } finally {
       setIsAdding(false);
     }
   };
 
-  // Check if the selected size is out of stock
-  const isOutOfStock = sizeOption && sizeOption.quantity <= 0;
+  const isOutOfStock = !!sizeOption && sizeOption.quantity <= 0;
 
   return (
     <button

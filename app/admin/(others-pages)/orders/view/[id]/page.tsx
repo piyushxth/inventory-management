@@ -42,16 +42,16 @@ const OrderViewPage = async ({
               <strong>Phone:</strong> {order.customer?.phone}
             </div>
             <div>
-              <strong>Province:</strong> {order.customer?.province}
+              <strong>Province:</strong> {order.shippingAddress?.province}
             </div>
             <div>
-              <strong>City:</strong> {order.customer?.city}
+              <strong>City:</strong> {order.shippingAddress?.city}
             </div>
             <div>
-              <strong>Address:</strong> {order.customer?.address}
+              <strong>Address:</strong> {order.shippingAddress?.address}
             </div>
             <div>
-              <strong>Landmark:</strong> {order.customer?.landmark}
+              <strong>Landmark:</strong> {order.shippingAddress?.landmark}
             </div>
           </div>
         </ComponentCard>
@@ -96,8 +96,8 @@ const OrderViewPage = async ({
               <strong>Discount:</strong> ${order.discount?.toFixed(2) ?? 0}
             </div>
             <div>
-              <strong>Additional Price:</strong> $
-              {order.additionalPrice?.toFixed(2) ?? 0}
+              <strong>Shipping Fee:</strong> $
+              {order.shippingFee?.toFixed(2) ?? 0}
             </div>
             <div>
               <strong>Total Amount:</strong> $

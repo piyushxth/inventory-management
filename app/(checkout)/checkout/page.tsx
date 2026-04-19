@@ -71,11 +71,18 @@ export default function Checkout() {
     setMounted(true);
   }, []);
 
-  const subtotal = useMemo(
-    () => cartItems.reduce((t: number, i: CartItem) => t + i.product.basePrice * i.quantity, 0),
+  // Display-only estimate. The server recomputes totals from the variant option
+  // price at order time — never trust this number for payment.
+  const subtotalEstimate = useMemo(
+    () =>
+      cartItems.reduce(
+        (t: number, i: CartItem) =>
+          t + (i.size?.price || i.product.basePrice || 0) * i.quantity,
+        0
+      ),
     [cartItems]
   );
-  const total = subtotal;
+  const totalEstimate = subtotalEstimate;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -120,68 +127,60 @@ export default function Checkout() {
         return;
       }
       
-      // Prepare order data
+      // Assemble the order in the shape required by OrderCreateSchema — server
+      // computes all pricing, so we never send totalAmount from the client.
+      const shippingAddress = {
+        province: form.shippingProvince,
+        city: form.shippingCity,
+        address: form.shippingAddress,
+        landmark: form.shippingLandmark || undefined,
+      };
+      const billingAddress = useSameAddress
+        ? shippingAddress
+        : {
+            province: form.billingProvince,
+            city: form.billingCity,
+            address: form.billingAddress,
+            landmark: form.billingLandmark || undefined,
+          };
+
       const order = {
         customer: {
           name: form.name,
           email: form.email,
           phone: form.phone,
-          province: form.shippingProvince,
-          city: form.shippingCity,
-          address: form.shippingAddress,
-          landmark: form.shippingLandmark,
         },
-        items: cartItems.map((i) => ({ 
-          product: i.product._id, 
-          quantity: i.quantity, 
-          price: i.product.basePrice 
+        shippingAddress,
+        billingAddress,
+        items: cartItems.map((i) => ({
+          product: i.product._id,
+          variant: i.variant?._id,
+          size: i.size?.size,
+          quantity: i.quantity,
         })),
-        totalAmount: total,
         paymentMethod: form.paymentMethod,
-        orderNote: form.orderNote,
+        orderNote: form.orderNote || undefined,
       };
-      
-      // For eSewa payment, we need to create the order first but mark it as unpaid
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || "Failed to create order");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (form.paymentMethod === "Esewa") {
-        // Set payment status to unpaid initially
-        const orderWithStatus = {
-          ...order,
-          paymentStatus: "Unpaid"
-        };
-        
-        const res = await fetch("/api/orders", { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify(orderWithStatus) 
-        });
-        
-        const data = await res.json();
-        if (data.success) {
-          // Store the order ID for eSewa payment
-          setEsewaOrderId(data.data._id);
-          
-          // Redirect to eSewa payment page
-          initiateEsewaPayment(data.data._id, total);
-        } else {
-          setError(data.message || "Failed to create order");
-          setIsSubmitting(false);
-        }
+        setEsewaOrderId(data.data._id);
+        // Server-authoritative amount.
+        initiateEsewaPayment(data.data._id, data.data.totalAmount);
       } else {
-        // For COD, proceed as before
-        const res = await fetch("/api/orders", { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify(order) 
-        });
-        
-        const data = await res.json();
-        if (data.success) {
-          await clearCart();
-          router.push(`/checkout/order-success?orderId=${data.data._id}`);
-        } else {
-          setError(data.message || "Failed to create order");
-          setIsSubmitting(false);
-        }
+        await clearCart();
+        router.push(`/checkout/order-success?orderId=${data.data._id}`);
       }
     } catch (err) {
       console.error("Order submission error:", err);
@@ -431,10 +430,10 @@ export default function Checkout() {
                 ))}
               </div>
               <div className="space-y-3 border-t pt-4">
-                <div className="flex justify-between text-sm"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+                <div className="flex justify-between text-sm"><span>Subtotal</span><span>₹{subtotalEstimate.toFixed(2)}</span></div>
                 <div className="flex justify-between text-sm"><span>Shipping</span><span className="text-green-600">Free</span></div>
                 <div className="flex justify-between text-sm"><span>Taxes</span><span>Calculated at checkout</span></div>
-                <div className="border-t pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
+                <div className="border-t pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>₹{totalEstimate.toFixed(2)}</span></div>
               </div>
               {error ? <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div> : null}
               <button type="submit" disabled={isSubmitting || isLoading} className="w-full bg-black text-white py-3 hover:bg-gray-800 transition mt-6 disabled:opacity-50 disabled:cursor-not-allowed">

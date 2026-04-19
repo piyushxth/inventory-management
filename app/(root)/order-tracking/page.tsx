@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IOrder } from "@/libs/models/order";
 
-export default function OrderTracking() {
+function OrderTrackingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -233,5 +233,13 @@ export default function OrderTracking() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrderTracking() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 text-center text-gray-500">Loading order details...</div>}>
+      <OrderTrackingInner />
+    </Suspense>
   );
 }

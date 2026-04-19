@@ -1,23 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import bcrypt from "bcryptjs";
 import connectMongoDB from "../../../libs/connnectMongoDB";
 import { User } from "../../../libs/models/users";
-import bcrypt from "bcryptjs"; // Import bcryptjs
 import Roles from "../../../libs/models/roles";
+import { UserSignupSchema } from "@/libs/zod_schema/user";
 
-// POST: Create a new user
+// POST: Public signup. Roles/profilePicture/address are NEVER taken from the
+// request body — the server always assigns the "user" role.
 export async function POST(req: NextRequest) {
   try {
-    // Parse the request body
-    const userData = await req.json();
+    const body = await req.json();
+    const parsed = UserSignupSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid signup data",
+          errors: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+    const { name, email, password } = parsed.data;
 
-    // Log the received data for debugging
-    console.log("Received user data:", userData);
-
-    // Connect to the MongoDB database
     await connectMongoDB();
 
-    // Check if the email already exists in the database
-    const existingUser = await User.findOne({ email: userData.email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
         { success: false, message: "User already exists" },
@@ -25,65 +34,70 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash the password using bcrypt
-    const hashedPassword = await bcrypt.hash(userData.password, 10); // Hash with salt rounds of 10
-
-    // Assign 'user' role by default if not specified
-    let roleId = userData.roles;
-    if (!roleId) {
-      const userRole = await Roles.findOne({ name: "user" });
-      if (!userRole) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Default 'user' role not found. Please seed roles first.",
-          },
-          { status: 500 }
-        );
-      }
-      roleId = userRole._id;
-    }
-
-    // Create a new user with the hashed password and role
-    const newUser = new User({
-      ...userData,
-      password: hashedPassword, // Set the hashed password
-      roles: roleId,
-    });
-
-    // Save the new user to the database
-    const savedUser = await newUser.save();
-
-    // Return the saved user data as a response
-    return NextResponse.json(
-      { success: true, message: "User created successfully", data: savedUser },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error creating user:", error.message);
+    const userRole = await Roles.findOne({ name: "user" });
+    if (!userRole) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        {
+          success: false,
+          message: "Default 'user' role not found. Please seed roles first.",
+        },
         { status: 500 }
       );
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      roles: userRole._id,
+    });
+
+    const savedUser = await newUser.save();
+
+    const safeUser = {
+      _id: savedUser._id,
+      name: savedUser.name,
+      email: savedUser.email,
+    };
+
     return NextResponse.json(
-      { success: false, message: "An unexpected error occurred" },
+      {
+        success: true,
+        message: "User created successfully",
+        data: safeUser,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    console.error("Error creating user:", message);
+    return NextResponse.json(
+      { success: false, message: "Failed to create user" },
       { status: 500 }
     );
   }
 }
 
-// GET: Fetch all users
-export async function GET() {
+// GET: Admin-only — fetch all users.
+export async function GET(req: NextRequest) {
   try {
-    // Connect to MongoDB
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token || token.role !== "admin") {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     await connectMongoDB();
 
-    // Fetch all users from the database with populated roles
-    const users = await User.find().populate("roles");
+    const users = await User.find()
+      .select("-password")
+      .populate("roles");
 
-    // Return the fetched users as a response
     return NextResponse.json({ success: true, data: users }, { status: 200 });
   } catch (error) {
     console.error("Error fetching users:", error);

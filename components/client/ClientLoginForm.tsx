@@ -62,14 +62,13 @@ const ClientLoginForm: React.FC = () => {
       });
 
       if (response?.error) {
-        console.log("SignIn error:", response.error);
-        setFormError(response.error);
+        setFormError("Invalid email or password");
         setSuccess(null);
       } else {
         setSuccess("Login successful!");
         setFormError(null);
-        // Redirect to home page for clients
         router.push("/");
+        router.refresh();
       }
     } catch (error) {
       // Type-checking `error` as unknown

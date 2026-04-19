@@ -1,33 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
+import connectMongoDB from "@/libs/connnectMongoDB";
+import { Order } from "@/libs/models/order";
 
+/**
+ * Verify an eSewa UAT v1 payment and mark the order as Paid on success.
+ *
+ * Security notes:
+ * - The `amt` used to query eSewa MUST be the order's server-stored total, not
+ *   whatever the client passed — otherwise an attacker can pay a smaller amount
+ *   and mark the full order as Paid.
+ * - The callback runs *server-side* to eSewa using the merchant scd from env.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const { oid, refId, amt } = await req.json();
-    
-    // Verify payment with eSewa
-    const response = await fetch(process.env.ESEWA_VERIFY_URL || "https://uat.esewa.com.np/epay/transrec", {
+    const { oid, refId } = await req.json();
+    if (!oid || !refId) {
+      return NextResponse.json(
+        { success: false, message: "Missing oid or refId" },
+        { status: 400 }
+      );
+    }
+
+    await connectMongoDB();
+    const order = await Order.findById(oid);
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    // Already paid — idempotent success response.
+    if (order.paymentStatus === "Paid") {
+      return NextResponse.json({ success: true, alreadyPaid: true });
+    }
+
+    const serverAmt = order.totalAmount;
+    const scd = process.env.ESEWA_MERCHANT_ID || "EPAYTEST";
+    const verifyUrl =
+      process.env.ESEWA_VERIFY_URL || "https://uat.esewa.com.np/epay/transrec";
+
+    const response = await fetch(verifyUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        amt: amt.toString(),
+        amt: serverAmt.toString(),
         rid: refId,
         pid: oid,
-        scd: process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
+        scd,
       }),
     });
-    
     const data = await response.text();
-    
-    // eSewa returns "Success" or "failure" in the response
-    if (data.includes("Success")) {
-      return NextResponse.json({ success: true });
-    } else {
-      return NextResponse.json({ success: false, message: "Payment verification failed" });
+
+    if (!data.includes("Success")) {
+      order.paymentStatus = "Failed";
+      await order.save();
+      return NextResponse.json(
+        { success: false, message: "Payment verification failed" },
+        { status: 400 }
+      );
     }
+
+    order.paymentStatus = "Paid";
+    order.paymentRefId = refId;
+    if (order.orderStatus === "Pending") order.orderStatus = "Processing";
+    await order.save();
+
+    return NextResponse.json({ success: true, data: { orderId: order._id } });
   } catch (error) {
     console.error("eSewa verification error:", error);
-    return NextResponse.json({ success: false, message: "An error occurred during verification" });
+    return NextResponse.json(
+      { success: false, message: "An error occurred during verification" },
+      { status: 500 }
+    );
   }
 }

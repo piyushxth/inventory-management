@@ -11,6 +11,9 @@ import Roles from "@/libs/models/roles";
 import { Order } from "@/libs/models/order";
 import { Product } from "@/libs/models/product";
 
+// Admin dashboard reads live data from MongoDB on every request.
+export const dynamic = "force-dynamic";
+
 export default async function Ecommerce() {
   await connectMongoDB();
 

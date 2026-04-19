@@ -1,19 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCart } from "@/components/client/CartContext";
 
-export default function EsewaFailure() {
+function EsewaFailureInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-
-  // Get parameters from eSewa
-  const oid = searchParams.get("oid"); // Order ID
+  const oid = searchParams.get("oid");
 
   useEffect(() => {
-    // In a real application, you might want to log this failure or notify admins
     console.log("eSewa payment failed for order:", oid);
   }, [oid]);
 
@@ -27,7 +22,7 @@ export default function EsewaFailure() {
         </div>
         <h1 className="text-3xl font-bold mb-2">Payment Failed</h1>
         <p className="text-gray-600 mb-6">Your payment was not completed. Please try again or choose another payment method.</p>
-        
+
         {oid && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
             <p className="text-yellow-800">
@@ -38,15 +33,15 @@ export default function EsewaFailure() {
             </p>
           </div>
         )}
-        
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button 
+          <button
             onClick={() => router.push("/checkout")}
             className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 transition"
           >
             Retry Payment
           </button>
-          <button 
+          <button
             onClick={() => router.push("/")}
             className="px-6 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition"
           >
@@ -55,5 +50,13 @@ export default function EsewaFailure() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EsewaFailure() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 text-center text-gray-500">Loading...</div>}>
+      <EsewaFailureInner />
+    </Suspense>
   );
 }

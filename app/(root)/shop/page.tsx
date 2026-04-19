@@ -10,6 +10,9 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+// Shop fetches live data from MongoDB, so opt out of build-time prerender.
+export const dynamic = "force-dynamic";
+
 async function page() {
   const products = await getProducts();
   

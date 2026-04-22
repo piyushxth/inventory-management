@@ -1,33 +1,68 @@
 import Features from "@/components/client/Features";
 import Instagram from "@/components/client/Instagram";
-import ProductFilters from "@/components/client/ProductFilters";
-import { Category } from "@/libs/models/category";
-import connectMongoDB from "@/libs/connnectMongoDB";
 import Image from "next/image";
-import Link from "next/link";
 import React from "react";
 
-// Shop fetches live data from MongoDB, so opt out of build-time prerender.
+import type { Metadata } from "next";
+
+import {
+  getProductFilterOptions,
+  listProducts,
+  parseSlugList,
+  parseSort,
+} from "@/libs/products";
+
+import { ProductFilters } from "./ProductFilters";
+import { SortSelect } from "./SortSelect";
+import { ProductCard } from "@/components/client/ProductCard copy";
+
+export const metadata: Metadata = {
+  title: "Shop all · Ecommerce",
+  description: "Browse the full product catalog.",
+};
+
+// Opt out of caching: filters + sort come from searchParams at request time
+// and we want fresh stock/prices on every view.
 export const dynamic = "force-dynamic";
 
-async function page() {
-  // Fetch categories and brands for filter options
-  await connectMongoDB();
-  const categories = await Category.find();
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+
+  const query = {
+    genders: parseSlugList(sp.gender),
+    categories: parseSlugList(sp.category),
+    colors: parseSlugList(sp.color),
+    sizes: parseSlugList(sp.size),
+    sort: parseSort(sp.sort),
+  };
+
+  const [options, products] = await Promise.all([
+    getProductFilterOptions(),
+    listProducts(query),
+  ]);
+
+  const totalFiltersApplied =
+    query.genders.length +
+    query.categories.length +
+    query.colors.length +
+    query.sizes.length;
 
   // Gradients for overlays
   const mobileOverlay =
     "linear-gradient(61.56deg, rgba(0,0,0,0.18), rgba(0,0,0,0) 74.72%)";
   const desktopOverlay =
     "linear-gradient(360deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 34.19%), linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 13.36%)";
-
   return (
     <section className="w-full">
       <div
         className={`
-          relative overflow-hidden will-change-transform
-          aspect-[375/460] max-h -auto md:max-h-[464px] lg:max-h-auto lg:aspect-[1440/450] w-full
-        `}
+              relative overflow-hidden will-change-transform
+              aspect-[375/460] max-h -auto md:max-h-[464px] lg:max-h-auto lg:aspect-[1440/450] w-full
+            `}
       >
         <Image
           src="/client/shop.webp"
@@ -40,11 +75,11 @@ async function page() {
         {/* Overlay */}
         <div
           className={`
-            absolute inset-0
-            flex flex-wrap items-end gap-4
-           py-[40px] px-[16px] md:py-[64px] md:px-[40px]  
-            z-10
-          `}
+                absolute inset-0
+                flex flex-wrap items-end gap-4
+               py-[40px] px-[16px] md:py-[64px] md:px-[40px]  
+                z-10
+              `}
           style={{
             background:
               // Use desktop overlay on large screens, mobile overlay otherwise
@@ -98,24 +133,44 @@ async function page() {
           </div>
         </div>
       </div>
-      <section className="">
-        <div className="flex flex-col gap-4 mx-auto p-4 lg:px-10 lg:pt-8 lg:pb-6">
-          <div className="">
-            <nav>
-              <ol>
-                <li className="text-[#818181]">Home</li>
-                <li>Shop</li>
-              </ol>
-            </nav>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Shop all
+            </h1>
+            <p className="mt-2 text-sm text-neutral-500">
+              {products.length} {products.length === 1 ? "product" : "products"}
+              {totalFiltersApplied > 0
+                ? ` · ${totalFiltersApplied} filter${totalFiltersApplied === 1 ? "" : "s"} applied`
+                : ""}
+            </p>
           </div>
+          <SortSelect current={query.sort} />
+        </header>
+
+        <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <ProductFilters options={options} />
+
+          <section aria-label="Products">
+            {products.length === 0 ? (
+              <div className="flex min-h-80 items-center justify-center rounded-lg border border-dashed border-black/10 text-sm text-neutral-500 dark:border-white/15">
+                No products match these filters.
+              </div>
+            ) : (
+              <ul className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((product) => (
+                  <li key={product.id}>
+                    <ProductCard product={product} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-      </section>
-      {/* Pass all data to the client component */}
-      <section className="relative mx-auto px-4 lg:px-10 lg:pb-12 w-full"></section>
+      </main>
       <Features />
       <Instagram />
     </section>
   );
 }
-
-export default page;

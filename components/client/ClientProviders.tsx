@@ -2,14 +2,9 @@
 
 import React, { PropsWithChildren } from "react";
 import { SessionProvider } from "next-auth/react";
-import { CartProvider } from "./CartContext";
 
 const ClientProviders = ({ children }: PropsWithChildren) => {
-  return (
-    <SessionProvider>
-      <CartProvider>{children}</CartProvider>
-    </SessionProvider>
-  );
+  return <SessionProvider>{children}</SessionProvider>;
 };
 
 export default ClientProviders;

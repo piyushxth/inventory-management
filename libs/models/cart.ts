@@ -1,52 +1,36 @@
-import mongoose, { Document, Schema, Model, Types } from "mongoose";
-
-// Define the cart item schema
-const cartItemSchema = new Schema({
-  product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  variant: { type: Schema.Types.ObjectId, ref: "Variant", required: false },
-  size: { 
-    size: { type: String, required: false },
-    price: { type: Number, required: false },
-    quantity: { type: Number, required: false },
-    sku: { type: String, required: false }
-  },
-  quantity: { type: Number, required: true, min: 1 },
-}, { _id: false });
+import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 const cartSchema = new Schema(
   {
-    user: {
+    // Logged-in user's cart. Null/undefined for guest carts.
+    // Indexed via the explicit cartSchema.index() below (unique, partial).
+    userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      unique: true,
+      default: null,
     },
-    items: { type: [cartItemSchema], required: true },
-    updatedAt: { type: Date, default: Date.now },
+    // Guest cart identifier (cookie/session id). Null once the cart is merged
+    // into a logged-in user's cart.
+    sessionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export interface ISizeInfo {
-  size?: string;
-  price?: number;
-  quantity?: number;
-  sku?: string;
-}
+// A user should only have one active cart. (Using a partial index so guest
+// carts without userId aren't constrained.)
+cartSchema.index(
+  { userId: 1 },
+  { unique: true, partialFilterExpression: { userId: { $type: "objectId" } } },
+);
 
-export interface ICartItem extends Document {
-  product: Types.ObjectId;
-  variant?: Types.ObjectId; // Reference to Variant model
-  size?: ISizeInfo;
-  quantity: number;
-}
+export type CartDoc = InferSchemaType<typeof cartSchema> & {
+  _id: mongoose.Types.ObjectId;
+};
 
-export interface ICart extends Document {
-  user: Types.ObjectId;
-  items: ICartItem[];
-  updatedAt: Date;
-  createdAt: Date;
-}
-
-export const Cart: Model<ICart> =
-  mongoose.models.Cart || mongoose.model<ICart>("Cart", cartSchema);
+export const Cart: Model<CartDoc> =
+  (mongoose.models.Cart as Model<CartDoc>) ??
+  mongoose.model<CartDoc>("Cart", cartSchema);

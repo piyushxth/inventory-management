@@ -1,25 +1,31 @@
-import mongoose, { Document, Schema, Model, Types } from "mongoose";
+import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
-const wishlistSchema: Schema = new Schema(
+const wishlistSchema = new Schema(
   {
-    user: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
+      index: true,
     },
-    products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
-    updatedAt: { type: Date, default: Date.now },
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+      index: true,
+    },
+    addedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export interface IWishlist extends Document {
-  user: Types.ObjectId;
-  products: Types.ObjectId[];
-  updatedAt: Date;
-}
+// A user can only wish-list a product once.
+wishlistSchema.index({ userId: 1, productId: 1 }, { unique: true });
 
-export const Wishlist: Model<IWishlist> =
-  mongoose.models.Wishlist ||
-  mongoose.model<IWishlist>("Wishlist", wishlistSchema);
+export type WishlistDoc = InferSchemaType<typeof wishlistSchema> & {
+  _id: mongoose.Types.ObjectId;
+};
+
+export const Wishlist: Model<WishlistDoc> =
+  (mongoose.models.Wishlist as Model<WishlistDoc>) ??
+  mongoose.model<WishlistDoc>("Wishlist", wishlistSchema);

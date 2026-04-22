@@ -1,11 +1,10 @@
 import connectMongoDB from "@/libs/connnectMongoDB";
-import { registerModels } from "@/libs/registerModels";
 import CredentialsProvider from "next-auth/providers/credentials";
 import mongoose from "mongoose";
 import { compare } from "bcryptjs";
 import type { NextAuthOptions, Session, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
-import { User as MongooseUser } from "@/libs/models/users";
+import { User as MongooseUser } from "@/libs/models/User";
 
 export const authOptions: NextAuthOptions = {
   // Configure one or more authentication providers
@@ -27,7 +26,6 @@ export const authOptions: NextAuthOptions = {
             console.log("[authorize] Missing email or password");
             return null;
           }
-          registerModels();
           // Ensure credentials are strings
 
           const email = credentials?.email as string;
@@ -37,9 +35,7 @@ export const authOptions: NextAuthOptions = {
           await connectMongoDB();
           console.log("[authorize] Connected to database");
           console.log("[authorize] Mongoose models:", mongoose.models);
-          const user = await MongooseUser.findOne({ email })
-            .populate("roles") // Populate with role's name
-            .exec();
+          const user = await MongooseUser.findOne({ email }).exec();
 
           console.log("[authorize] User found:", user);
 
@@ -48,12 +44,12 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid email or password");
           }
 
-          if (!user.password) {
+          if (!user.passwordHash) {
             console.log("[authorize] User has no password field:", user);
             throw new Error("Invalid email or password");
           }
 
-          const isMatched = await compare(password, user.password);
+          const isMatched = await compare(password, user.passwordHash);
           console.log("[authorize] Password match result:", isMatched);
           if (!isMatched) {
             console.log("[authorize] Password did not match for user:", email);
@@ -61,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Check if user has a valid role (either admin or user)
-          const roleName = user.roles?.name ? user.roles.name.toString() : "user";
+          const roleName = user.role;
           if (roleName !== "admin" && roleName !== "user") {
             throw new Error("Invalid user role");
           }
@@ -103,7 +99,7 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await MongooseUser.findById(session.user.id)
             .select("profilePicture")
             .lean();
-          session.user.profilePicture = dbUser?.profilePicture || null;
+          session.user.profilePicture = dbUser?.image || null;
         } catch (e) {
           session.user.profilePicture = null;
         }

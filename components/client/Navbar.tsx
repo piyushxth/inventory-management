@@ -3,23 +3,14 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import MobileNav from "./MobileNav";
 import { usePathname } from "next/navigation";
-import CartDrawer from "./CartDrawer";
-import { useCart } from "./CartContext";
 import { useSession, signOut } from "next-auth/react";
+import { CartButton } from "./CartButton";
+import { CartDrawer } from "./CartDrawer copy";
 
-const Navlinks = [
-  {
-    title: "Shop",
-    href: "/shop",
-  },
-  {
-    title: "About",
-    href: "/about",
-  },
-  {
-    title: "Special Events",
-    href: "/events",
-  },
+const GENDER_LINKS: { label: string; slug: string }[] = [
+  { label: "Men", slug: "men" },
+  { label: "Women", slug: "women" },
+  { label: "Unisex", slug: "unisex" },
 ];
 
 const Navbar = () => {
@@ -28,12 +19,11 @@ const Navbar = () => {
   const [offsetTop, setOffsetTop] = useState(0);
   const pathname = usePathname();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const { cartCount } = useCart(); // Get cart count
   const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const borderColor =
-    isSticky || pathname.includes("/product")
+    isSticky || pathname.includes("/products")
       ? "border border-black"
       : "border border-white";
 
@@ -137,17 +127,28 @@ const Navbar = () => {
             }`}
           >
             <nav className="hidden lg:flex items-center">
-              {Navlinks.map((link, index) => (
+              <Link
+                href="/products"
+                className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
+                  isSticky || pathname.includes("/product")
+                    ? "text-black group-hover:text-black"
+                    : "text-white group-hover:text-black"
+                }`}
+              >
+                Shop all
+              </Link>
+
+              {GENDER_LINKS.map((g, index) => (
                 <Link
-                  href={link.href}
+                  href={`/products?gender=${g.slug}`}
                   key={index}
                   className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                    isSticky || pathname.includes("/product")
+                    isSticky || pathname.includes("/products")
                       ? "text-black group-hover:text-black"
                       : "text-white group-hover:text-black"
                   }`}
                 >
-                  {link.title}
+                  {g.label}
                 </Link>
               ))}
             </nav>
@@ -228,21 +229,10 @@ const Navbar = () => {
             </Link>
           )}
 
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
-              isSticky || pathname.includes("/product")
-                ? "border-l border-black text-black group-hover:text-black"
-                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
-            }`}
-          >
-            CART {cartCount > 0 && `(${cartCount})`}
-          </button>
+          <CartButton />
         </ul>
       </nav>
-
-      {/* Cart Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <CartDrawer />
     </>
   );
 };

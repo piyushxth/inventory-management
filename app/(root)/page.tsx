@@ -1,4 +1,3 @@
-import BestSelling from "@/components/client/BestSelling";
 import Collections from "@/components/client/Collections";
 import Features from "@/components/client/Features";
 import Hero from "@/components/client/Hero";

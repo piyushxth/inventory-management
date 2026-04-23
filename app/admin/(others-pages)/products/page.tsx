@@ -13,7 +13,15 @@ import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { TProductCreate } from "@/libs/zod_schema/products/productCreate";
-import { IProduct } from "@/libs/models/product";
+
+interface IProduct {
+  _id: string;
+  name: string;
+  category: string | { name: string };
+  costPrice: number;
+  basePrice: number;
+  mainImage?: string[];
+}
 
 interface ProductWithId extends IProduct {
   id: string;

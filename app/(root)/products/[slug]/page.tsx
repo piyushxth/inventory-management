@@ -27,8 +27,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs text-neutral-500">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm">
         <ol className="flex flex-wrap items-center gap-1">
           <li>
             <Link href="/products" className="hover:underline">
@@ -45,9 +45,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             </Link>
           </li>
           <li aria-hidden>·</li>
-          <li className="text-neutral-700 dark:text-neutral-300">
-            {product.name}
-          </li>
+          <li>{product.name}</li>
         </ol>
       </nav>
 

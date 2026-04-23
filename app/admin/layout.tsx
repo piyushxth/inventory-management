@@ -3,12 +3,12 @@
 import React from "react";
 import { Outfit } from "next/font/google";
 import { SidebarProvider, useSidebar } from "@/adminContext/SidebarContext";
-import AppSidebar from "@/adminLayout/AppSidebar";
 import Backdrop from "@/adminLayout/Backdrop";
 import AppHeader from "@/adminLayout/AppHeader";
 import { ThemeProvider } from "@/adminContext/ThemeContext";
 import "./adminGlobals.css";
 import TanstackProviders from "@/components/admin/Providers";
+import AppSidebar from "@/adminLayout/AppSidebar";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -38,8 +38,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+      ? "lg:ml-[290px]"
+      : "lg:ml-[90px]";
 
   return (
     <TanstackProviders>

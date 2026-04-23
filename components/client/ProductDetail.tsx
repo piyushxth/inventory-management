@@ -138,12 +138,12 @@ export function ProductDetail({ product }: Props) {
       {/* Right column — specs + pickers */}
       <div className="flex flex-col gap-6">
         <header className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+          <p className="text-[11px] uppercase tracking-[0.12em] ">
             {[product.gender.label, product.category.name]
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl dark:text-neutral-100">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl ">
             {product.name}
           </h1>
           <div className="flex items-baseline gap-3 pt-1">
@@ -151,7 +151,7 @@ export function ProductDetail({ product }: Props) {
               className={
                 isOnSale
                   ? "text-xl font-medium text-red-600"
-                  : "text-xl font-medium text-neutral-900 dark:text-neutral-100"
+                  : "text-xl font-medium text-neutral-900 "
               }
             >
               {formatPrice(displayPrice)}
@@ -165,19 +165,15 @@ export function ProductDetail({ product }: Props) {
         </header>
 
         {product.description && (
-          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-            {product.description}
-          </p>
+          <p className="text-sm leading-relaxed">{product.description}</p>
         )}
 
         {/* Color picker */}
         {product.colors.length > 0 && (
           <div>
             <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                Colour
-              </h2>
-              <span className="text-xs text-neutral-500">
+              <h2 className="text-sm font-medium">Colour</h2>
+              <span className="text-xs ">
                 {product.colors.find((c) => c.id === selectedColorId)?.name ??
                   ""}
               </span>
@@ -225,12 +221,10 @@ export function ProductDetail({ product }: Props) {
         {product.sizes.length > 0 && (
           <div>
             <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                Size
-              </h2>
+              <h2 className="text-sm font-medium text-neutral-900 ">Size</h2>
               <button
                 type="button"
-                className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100"
+                className="text-xs  underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100"
               >
                 Size guide
               </button>
@@ -251,7 +245,7 @@ export function ProductDetail({ product }: Props) {
                       active
                         ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
                         : available
-                          ? "border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-white"
+                          ? "border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700  dark:hover:border-white"
                           : "cursor-not-allowed border-neutral-200 text-neutral-400 line-through dark:border-neutral-800 dark:text-neutral-600"
                     }`}
                   >
@@ -265,7 +259,7 @@ export function ProductDetail({ product }: Props) {
 
         {/* Quantity */}
         <div>
-          <h2 className="mb-3 text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <h2 className="mb-3 text-sm font-medium text-neutral-900 ">
             Quantity
           </h2>
           <div className="inline-flex items-center rounded-full border border-neutral-300 dark:border-neutral-700">
@@ -311,7 +305,7 @@ export function ProductDetail({ product }: Props) {
             type="button"
             onClick={() => setWishlisted((v) => !v)}
             aria-pressed={wishlisted}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-neutral-300 px-6 text-sm font-medium text-neutral-900 transition hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-white"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-neutral-300 px-6 text-sm font-medium text-neutral-900 transition hover:border-neutral-900 dark:border-neutral-700  dark:hover:border-white"
           >
             <HeartIcon filled={wishlisted} />
             {wishlisted ? "In wishlist" : "Wishlist"}
@@ -319,7 +313,7 @@ export function ProductDetail({ product }: Props) {
         </div>
 
         {selectedVariant && (
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs ">
             SKU: {selectedVariant.sku} ·{" "}
             {selectedVariant.inStock > 0
               ? `${selectedVariant.inStock} in stock`

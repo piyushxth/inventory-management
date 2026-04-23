@@ -2,7 +2,6 @@
 const nextConfig = {
   images: {
     domains: ["images.unsplash.com"],
-
     remotePatterns: [
       {
         protocol: "https",
@@ -10,11 +9,32 @@ const nextConfig = {
       },
     ],
   },
+
   webpack(config) {
+    // 🔥 Find existing asset rule handling images
+    const fileLoaderRule = config.module.rules.find((rule) =>
+      rule.test?.test?.(".svg"),
+    );
+
+    // ❌ Exclude svg from default loader
+    if (fileLoaderRule) {
+      fileLoaderRule.exclude = /\.svg$/i;
+    }
+
+    // ✅ Add SVGR + fallback file loader
     config.module.rules.push({
-      test: /\.svg$/,
-      use: ["@svgr/webpack"],
+      test: /\.svg$/i,
+      oneOf: [
+        {
+          issuer: /\.[jt]sx?$/,
+          use: ["@svgr/webpack"], // React component
+        },
+        {
+          type: "asset/resource", // fallback (for url usage)
+        },
+      ],
     });
+
     return config;
   },
 };

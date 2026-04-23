@@ -24,7 +24,7 @@ const PUBLIC_API_ROUTES = ["/api/public-data"];
 function isPublic(pathname: string) {
   if (pathname === "/") return true;
   return PUBLIC_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/"),
   );
 }
 
@@ -47,7 +47,7 @@ export async function middleware(req: NextRequest) {
     if (token) {
       if (pathname === "/login" || pathname === "/auth/admin/login") {
         return NextResponse.redirect(
-          new URL(token.role === "admin" ? "/admin" : "/", req.url)
+          new URL(token.role === "admin" ? "/admin" : "/", req.url),
         );
       }
       if (pathname === "/auth/client/login") {

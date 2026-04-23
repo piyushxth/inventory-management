@@ -11,8 +11,7 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function MonthlySalesChart({ data }: { data: number[] }) {
-  console.log("MonthlySalesChart data prop:", data);
+export default function MonthlySalesChart() {
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -82,6 +81,7 @@ export default function MonthlySalesChart({ data }: { data: number[] }) {
     fill: {
       opacity: 1,
     },
+
     tooltip: {
       x: {
         show: false,
@@ -91,14 +91,12 @@ export default function MonthlySalesChart({ data }: { data: number[] }) {
       },
     },
   };
-
   const series = [
     {
       name: "Sales",
-      data, // Use the dynamic data prop
+      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
     },
   ];
-
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {

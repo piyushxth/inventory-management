@@ -139,8 +139,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Shop all
             </h1>
-            <p className="mt-2 text-sm text-neutral-500">
-              {products.length} {products.length === 1 ? "product" : "products"}
+            <p className="mt-2 text-sm ">
+              {" "}
+              {products.length === 1 ? "product" : "products"}
               {totalFiltersApplied > 0
                 ? ` · ${totalFiltersApplied} filter${totalFiltersApplied === 1 ? "" : "s"} applied`
                 : ""}
@@ -154,7 +155,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
           <section aria-label="Products">
             {products.length === 0 ? (
-              <div className="flex min-h-80 items-center justify-center rounded-lg border border-dashed border-black/10 text-sm text-neutral-500 dark:border-white/15">
+              <div className="flex min-h-80 items-center justify-center rounded-lg border border-dashed border-black/10 text-sm">
                 No products match these filters.
               </div>
             ) : (

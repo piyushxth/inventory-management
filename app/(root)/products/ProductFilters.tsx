@@ -80,7 +80,7 @@ export function ProductFilters({ options }: { options: ProductFilterOptions }) {
           <button
             type="button"
             onClick={clearAll}
-            className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100"
+            className="text-xs  underline underline-offset-2  "
           >
             Clear all
           </button>
@@ -179,7 +179,7 @@ export function ProductFilters({ options }: { options: ProductFilterOptions }) {
                   "rounded-md border px-3 py-2 text-center text-sm transition " +
                   (isChecked
                     ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                    : "border-black/15 text-neutral-700 hover:border-black dark:border-white/20 dark:text-neutral-300 dark:hover:border-white")
+                    : "border-black/15  hover:border-black dark:border-white/20 dark:hover:border-white")
                 }
               >
                 {s.name}
@@ -201,7 +201,7 @@ function FilterSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-[0.12em] text-neutral-500">
+      <h3 className="mb-3 text-xs font-medium uppercase tracking-[0.12em] ">
         {title}
       </h3>
       {children}

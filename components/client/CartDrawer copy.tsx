@@ -69,19 +69,17 @@ export function CartDrawer() {
         aria-modal="true"
         aria-label="Shopping bag"
         tabIndex={-1}
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl outline-none transition-transform duration-300 dark:bg-neutral-950 ${
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl outline-none transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <header className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
-          <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Shopping bag
-          </h2>
+        <header className="flex items-center justify-between border-b px-5 py-4">
+          <h2 className="text-base font-semibold">Shopping bag</h2>
           <button
             type="button"
             onClick={close}
             aria-label="Close cart"
-            className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+            className="rounded-full p-1 text-neutral-500 transition  "
           >
             <svg
               viewBox="0 0 20 20"
@@ -100,11 +98,11 @@ export function CartDrawer() {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-neutral-500">Your bag is empty.</p>
+            <p className="text-sm">Your bag is empty.</p>
             <Link
               href="/products"
               onClick={close}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-neutral-900 px-5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-900 hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-neutral-900"
+              className="inline-flex h-10 items-center justify-center rounded-full border  px-5 text-sm font-medium"
             >
               Continue shopping
             </Link>
@@ -116,7 +114,7 @@ export function CartDrawer() {
                 <Link
                   href={`/products/${item.productSlug}`}
                   onClick={close}
-                  className="relative block aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-900"
+                  className="relative block aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-md "
                 >
                   {item.imageUrl ? (
                     <Image
@@ -135,11 +133,11 @@ export function CartDrawer() {
                       <Link
                         href={`/products/${item.productSlug}`}
                         onClick={close}
-                        className="truncate text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+                        className="truncate text-sm font-medium hover:underline "
                       >
                         {item.productName}
                       </Link>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs">
                         {item.color.name} · Size {item.size.name}
                       </p>
                     </div>
@@ -147,7 +145,7 @@ export function CartDrawer() {
                       type="button"
                       aria-label={`Remove ${item.productName}`}
                       onClick={() => removeItem(item.variantId)}
-                      className="rounded-full p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                      className="rounded-full p-1 transition  "
                     >
                       <svg
                         viewBox="0 0 20 20"
@@ -165,14 +163,14 @@ export function CartDrawer() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center rounded-full border border-neutral-300 dark:border-neutral-700">
+                    <div className="inline-flex items-center rounded-full border">
                       <button
                         type="button"
                         aria-label="Decrease quantity"
                         onClick={() =>
                           setQuantity(item.variantId, item.quantity - 1)
                         }
-                        className="flex h-8 w-8 items-center justify-center text-neutral-700 transition hover:text-neutral-900 disabled:opacity-40 dark:text-neutral-200 dark:hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center  transition disabled:opacity-40"
                         disabled={item.quantity <= 1}
                       >
                         −
@@ -186,7 +184,7 @@ export function CartDrawer() {
                         onClick={() =>
                           setQuantity(item.variantId, item.quantity + 1)
                         }
-                        className="flex h-8 w-8 items-center justify-center text-neutral-700 transition hover:text-neutral-900 disabled:opacity-40 dark:text-neutral-200 dark:hover:text-white"
+                        className="flex h-8 w-8 items-center justify-center  transition disabled:opacity-40"
                         disabled={
                           item.quantity >=
                           Math.min(item.inStock, MAX_QTY_PER_ITEM)
@@ -195,7 +193,7 @@ export function CartDrawer() {
                         +
                       </button>
                     </div>
-                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    <span className="text-sm font-medium">
                       {formatPrice(item.price * item.quantity)}
                     </span>
                   </div>
@@ -208,25 +206,26 @@ export function CartDrawer() {
         {items.length > 0 && (
           <footer className="space-y-3 border-t border-neutral-200 px-5 py-4 dark:border-neutral-800">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm text-neutral-500">Subtotal</span>
-              <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              <span className="text-sm">Subtotal</span>
+              <span className="text-base font-semibold">
                 {formatPrice(subtotal)}
               </span>
             </div>
-            <p className="text-[11px] text-neutral-500">
+            <p className="text-[11px]">
               Shipping and taxes calculated at checkout.
             </p>
             <Link
               href="/checkout"
               onClick={close}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-medium text-white transition"
             >
               Proceed to checkout
             </Link>
             <Link
               href="/products"
               onClick={close}
-              className="block text-center text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="block text-center text-xs border rounded-2xl text-neutral-500 px-2 py-3
+              hover:bg-neutral-200 transition"
             >
               Continue shopping
             </Link>

@@ -8,13 +8,8 @@ import {
   GroupIcon,
 } from "@/adminIcons";
 
-export const EcommerceMetrics = ({
-  usersCount,
-  ordersCount,
-}: {
-  usersCount: number;
-  ordersCount: number;
-}) => {
+export const EcommerceMetrics = () => {
+  console.log("ArrowUpIcon:", ArrowUpIcon);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
       {/* <!-- Metric Item Start --> */}
@@ -29,7 +24,7 @@ export const EcommerceMetrics = ({
               Customers
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {usersCount}
+              3,782
             </h4>
           </div>
           <Badge color="success">
@@ -51,7 +46,7 @@ export const EcommerceMetrics = ({
               Orders
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {ordersCount}
+              5,359
             </h4>
           </div>
 

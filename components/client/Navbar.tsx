@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { CartButton } from "./CartButton";
 import { CartDrawer } from "./CartDrawer copy";
+import { selectCartCount, useCartStore } from "@/libs/cart/store";
 
 const GENDER_LINKS: { label: string; slug: string }[] = [
   { label: "Men", slug: "men" },
@@ -21,11 +22,15 @@ const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const count = useCartStore(selectCartCount);
+  const hydrated = useCartStore((s) => s.hasHydrated);
+  const open = useCartStore((s) => s.openCart);
 
-  const borderColor =
-    isSticky || pathname.includes("/products")
-      ? "border border-black"
-      : "border border-white";
+  // Avoid SSR/client mismatch: render 0 badge on server + first paint, then
+  // swap to the real count after hydration.
+  const displayCount = hydrated ? count : 0;
+
+  const borderColor = isSticky ? "border border-black" : "border border-white";
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -88,7 +93,7 @@ const Navbar = () => {
             <Link
               href="/"
               className={`text-lg lg:text-lg py-2.5 px-6 fw-bold transition-colors duration-300 ${
-                isSticky || pathname.includes("/product")
+                isSticky
                   ? "text-black group-hover:text-black"
                   : "text-white group-hover:text-black"
               }`}
@@ -98,11 +103,7 @@ const Navbar = () => {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 700 100"
                   className="w-full h-auto group-hover:fill-black"
-                  fill={
-                    isSticky || pathname.includes("/product")
-                      ? "#000000"
-                      : "#FFFFFF"
-                  }
+                  fill={isSticky ? "#000000" : "#FFFFFF"}
                 >
                   <text
                     x="50%"
@@ -121,16 +122,14 @@ const Navbar = () => {
           </li>
           <li
             className={`flex flex-1 group-hover:border-l group-hover:border-black ${
-              isSticky || pathname.includes("/product")
-                ? "border-l border-black"
-                : "border-l border-white"
+              isSticky ? "border-l border-black" : "border-l border-white"
             }`}
           >
             <nav className="hidden lg:flex items-center">
               <Link
                 href="/products"
                 className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                  isSticky || pathname.includes("/product")
+                  isSticky
                     ? "text-black group-hover:text-black"
                     : "text-white group-hover:text-black"
                 }`}
@@ -143,7 +142,7 @@ const Navbar = () => {
                   href={`/products?gender=${g.slug}`}
                   key={index}
                   className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                    isSticky || pathname.includes("/products")
+                    isSticky
                       ? "text-black group-hover:text-black"
                       : "text-white group-hover:text-black"
                   }`}
@@ -156,7 +155,7 @@ const Navbar = () => {
           <Link
             href={"/help"}
             className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-              isSticky || pathname.includes("/product")
+              isSticky
                 ? "border-l border-black"
                 : "border-l border-white text-white group-hover:border-black group-hover:text-black"
             }`}
@@ -170,7 +169,7 @@ const Navbar = () => {
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
-                  isSticky || pathname.includes("/product")
+                  isSticky
                     ? "border-l border-black text-black group-hover:text-black"
                     : "border-l border-white text-white group-hover:border-black group-hover:text-black"
                 }`}
@@ -220,7 +219,7 @@ const Navbar = () => {
             <Link
               href="/auth/client/login"
               className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                isSticky || pathname.includes("/product")
+                isSticky
                   ? "border-l border-black text-black group-hover:text-black"
                   : "border-l border-white text-white group-hover:border-black group-hover:text-black"
               }`}
@@ -229,7 +228,23 @@ const Navbar = () => {
             </Link>
           )}
 
-          <CartButton />
+          <button
+            type="button"
+            onClick={open}
+            aria-label={`Open cart (${displayCount} item${displayCount === 1 ? "" : "s"})`}
+            className={`relative py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
+              isSticky
+                ? "border-l border-black text-black group-hover:text-black"
+                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+            }`}
+          >
+            CART
+            {displayCount > 0 && (
+              <span className="absolute right-0 top-0 inline-flex min-w-[18px] items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold leading-[18px] text-white dark:bg-white dark:text-neutral-900">
+                {displayCount > 99 ? "99+" : displayCount}
+              </span>
+            )}
+          </button>
         </ul>
       </nav>
       <CartDrawer />

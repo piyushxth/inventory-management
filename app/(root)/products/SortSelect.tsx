@@ -38,11 +38,7 @@ export function SortSelect({ current }: { current: SortKey }) {
         className="appearance-none rounded-md border border-black/10 bg-transparent px-3 py-2 pr-8 text-sm outline-none focus:border-black dark:border-white/20 dark:focus:border-white"
       >
         {SORT_OPTIONS.map((o) => (
-          <option
-            key={o.key}
-            value={o.key}
-            className="bg-white dark:bg-neutral-900"
-          >
+          <option key={o.key} value={o.key} className="bg-white">
             {o.label}
           </option>
         ))}

@@ -24,7 +24,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       className="group block focus:outline-none"
       prefetch={false}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
         {product.primaryImageUrl ? (
           <Image
             src={product.primaryImageUrl}
@@ -34,7 +34,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+          <div className="flex h-full w-full items-center justify-center text-xs ">
             No image
           </div>
         )}
@@ -49,19 +49,19 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       </div>
 
       <div className="mt-4 space-y-1">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+        <p className="text-[11px] uppercase tracking-[0.12em] ">
           {[product.gender.label, product.category.name]
             .filter(Boolean)
             .join(" · ")}
         </p>
 
-        <h3 className="text-[15px] font-medium leading-snug text-neutral-900 group-hover:underline underline-offset-4 decoration-1 dark:text-neutral-100">
+        <h3 className="text-[15px] font-medium leading-snug  group-hover:underline underline-offset-4 decoration-1 ">
           {product.name}
         </h3>
 
         {colorCount > 0 && (
           <div className="flex items-center gap-2 pt-0.5">
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs ">
               {colorCount} {colorCount === 1 ? "color" : "colors"}
             </span>
             <div className="flex items-center gap-1">
@@ -74,9 +74,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
                 />
               ))}
               {colorCount > 4 && (
-                <span className="text-[11px] text-neutral-500">
-                  +{colorCount - 4}
-                </span>
+                <span className="text-[11px] ">+{colorCount - 4}</span>
               )}
             </div>
           </div>
@@ -84,15 +82,11 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
         <div className="flex items-baseline gap-2 pt-1 text-sm">
           {showStrike && (
-            <span className="text-neutral-400 line-through">
-              {formatPrice(product.price)}
-            </span>
+            <span className=" line-through">{formatPrice(product.price)}</span>
           )}
           <span
             className={
-              product.isOnSale
-                ? "font-medium text-red-600"
-                : "font-medium text-neutral-900 dark:text-neutral-100"
+              product.isOnSale ? "font-medium text-red-600" : "font-medium  "
             }
           >
             {formatPrice(displayPrice)}

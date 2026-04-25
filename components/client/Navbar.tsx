@@ -22,7 +22,7 @@ const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const count = useCartStore(selectCartCount);
+  const count = useCartStore((s) => s.items.length);
   const hydrated = useCartStore((s) => s.hasHydrated);
   const open = useCartStore((s) => s.openCart);
 

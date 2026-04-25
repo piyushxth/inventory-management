@@ -18,6 +18,7 @@ function formatPrice(value: number): string {
 type Props = { product: ProductDetailType };
 
 export function ProductDetail({ product }: Props) {
+  console.log("mode:", useCartStore.getState().mode);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(
     product.colors[0]?.id ?? null,
   );

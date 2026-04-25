@@ -16,18 +16,19 @@ const Instagram = () => {
   useEffect(() => {
     async function getInstagramData() {
       try {
-        const res = await fetch(
-          `https://graph.instagram.com/me/media?fields=id,media_url,permalink&access_token=IGAAnZBIAD4guVBZAGJqUzA3Mmt6SDIxd0NIMDhYQXBiOTRnLWR0bWY5YmVyczQwY0ZAwQUQweWVNMVFGRjVnUS1FSEZAsVnNuQ1otTnB1R2E0WGtEZAk12aDhJMXVxZAmEwS2tKUV94M3FsTnhiNEgtM2VHYjg2V2tHOF9qWmo0VnJyNAZDZD`,
-        );
+        const res = await fetch("/api/instagram"); // ✅ move to backend (recommended)
         const data = await res.json();
+
         console.log("Instagram Data:", data);
-        setPosts(data.data); // save data into state
+
+        setPosts(Array.isArray(data.data) ? data.data : []);
       } catch (error) {
         console.error("Error fetching Instagram data:", error);
+        setPosts([]); // fallback
       }
     }
 
-    getInstagramData(); // call once when component mounts
+    getInstagramData();
   }, []);
   return (
     <>

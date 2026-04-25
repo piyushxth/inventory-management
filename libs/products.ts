@@ -24,6 +24,8 @@ import {
 } from "@/libs/models";
 import connectMongoDB from "./connnectMongoDB";
 
+type RecommendationType = "related" | "trending" | "new";
+
 // Re-export the shared types so existing imports from "@/lib/products" keep
 // working. New client-side imports should target "@/lib/products.types".
 export type {
@@ -590,21 +592,40 @@ export async function getProductBySlug(
 // by category; if that yields fewer than `limit` results, we fall back to
 // same-gender products to avoid an empty row.
 export async function getRecommendedProducts(params: {
-  productId: string;
-  categoryId: string;
-  genderId: string;
+  type?: RecommendationType;
+  productId?: string;
+  categoryId?: string;
+  genderId?: string;
   limit?: number;
 }): Promise<ProductListItem[]> {
   const limit = params.limit ?? 4;
   await connectMongoDB();
 
-  const currentId = new mongoose.Types.ObjectId(params.productId);
+  const currentId = params.productId
+    ? new mongoose.Types.ObjectId(params.productId)
+    : null;
+
   const categoryId = params.categoryId
     ? new mongoose.Types.ObjectId(params.categoryId)
     : null;
   const genderId = params.genderId
     ? new mongoose.Types.ObjectId(params.genderId)
     : null;
+
+  const type = params.type ?? "trending";
+
+  let match: Record<string, unknown> = {};
+
+  if (type === "related") {
+    if (!params.categoryId || !params.genderId || !currentId) {
+      return [];
+    }
+
+    match = {
+      categoryId,
+      genderId,
+    };
+  }
 
   const buildPipeline = (
     match: Record<string, unknown>,
@@ -667,7 +688,14 @@ export async function getRecommendedProducts(params: {
         let: { pid: "$_id" },
         pipeline: [
           { $match: { $expr: { $eq: ["$productId", "$$pid"] } } },
-          { $sort: { isPrimary: -1, sortOrder: 1 } },
+          {
+            $sort:
+              type === "new"
+                ? { createdAt: -1 }
+                : type === "trending"
+                  ? { salesCount: -1, createdAt: -1 } // if field exists
+                  : { createdAt: -1 },
+          },
           { $limit: 1 },
         ],
         as: "primaryImage",

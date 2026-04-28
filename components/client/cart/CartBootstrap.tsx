@@ -7,7 +7,7 @@ import {
   hydrateServerCart,
   mergeAndHydrateServerCart,
   useCartStore,
-} from "@/libs/cart/store";
+} from "@/libs/actions/cart/store";
 
 // Reconciles the client cart store with the user's authentication state.
 //

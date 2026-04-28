@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { CartButton } from "./CartButton";
 import { CartDrawer } from "./CartDrawer copy";
-import { selectCartCount, useCartStore } from "@/libs/cart/store";
+import { selectCartCount, useCartStore } from "@/libs/actions/cart/store";
 
 const GENDER_LINKS: { label: string; slug: string }[] = [
   { label: "Men", slug: "men" },

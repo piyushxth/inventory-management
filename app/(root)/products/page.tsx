@@ -10,7 +10,7 @@ import {
   listProducts,
   parseSlugList,
   parseSort,
-} from "@/libs/products";
+} from "@/libs/actions/products/read";
 
 import { ProductFilters } from "./ProductFilters";
 import { SortSelect } from "./SortSelect";
@@ -133,8 +133,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           </div>
         </div>
       </div>
+
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Shop all

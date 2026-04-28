@@ -1,6 +1,6 @@
 import { ProductDetail } from "@/components/client/ProductDetail";
 import { ProductRecommendations } from "@/components/client/ProductRecommendations";
-import { getProductBySlug } from "@/libs/products";
+import { getProductBySlug } from "@/libs/actions/products/read";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

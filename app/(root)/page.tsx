@@ -4,6 +4,7 @@ import Hero from "@/components/client/Hero";
 import HeroVideo from "@/components/client/HeroVideo";
 import Instagram from "@/components/client/Instagram";
 import MediaCard from "@/components/client/MediaCard";
+import { ProductRecommendations } from "@/components/client/ProductRecommendations";
 
 // Home fetches live product data, so opt out of build-time prerender.
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function Home() {
     <div>
       <Hero />
       <Collections />
+      <ProductRecommendations />
       <Features />
       <HeroVideo />
       <MediaCard />

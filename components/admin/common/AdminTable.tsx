@@ -24,6 +24,7 @@ interface AdminTableProps<T> {
   loading?: boolean;
   onRowSelect?: (selected: T[]) => void;
   actions?: (row: T) => React.ReactNode;
+  onRowClick?: (row: T) => void;
 }
 
 export default function AdminTable<T extends { id: string | number }>({
@@ -33,6 +34,7 @@ export default function AdminTable<T extends { id: string | number }>({
   loading = false,
   onRowSelect,
   actions,
+  onRowClick,
 }: AdminTableProps<T>) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -57,7 +59,7 @@ export default function AdminTable<T extends { id: string | number }>({
   const handleSelectAll = () => {
     if (allSelected) {
       const newSelected = selectedIds.filter(
-        (id) => !paginated.some((row) => row.id === id)
+        (id) => !paginated.some((row) => row.id === id),
       );
       setSelectedIds(newSelected);
       onRowSelect &&
@@ -88,7 +90,7 @@ export default function AdminTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03] z-0">
       <div className="mb-4 flex flex-col gap-2 px-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Table
@@ -142,6 +144,7 @@ export default function AdminTable<T extends { id: string | number }>({
                   />
                 </div>
               </TableCell>
+
               {columns.map((col, idx) => (
                 <TableCell
                   key={idx}
@@ -173,15 +176,14 @@ export default function AdminTable<T extends { id: string | number }>({
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {paginated.map((row, rowIdx) => (
+            {paginated.map((row) => (
               <TableRow
                 key={row.id}
+                onClick={() => onRowClick?.(row)}
                 className={`$${
                   selectedIds.includes(row.id)
                     ? "bg-blue-50 dark:bg-blue-900/30"
-                    : rowIdx % 2 === 0
-                    ? "bg-white dark:bg-white/[0.01]"
-                    : "bg-gray-50 dark:bg-white/[0.03]"
+                    : "bg-white dark:bg-white/[0.01] cursor-pointer transition hover:bg-gray-100 dark:hover:bg-white/[0.03]"
                 }`}
               >
                 <TableCell className="py-3 pr-5 whitespace-nowrap sm:pr-5 align-middle">
@@ -189,6 +191,7 @@ export default function AdminTable<T extends { id: string | number }>({
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(row.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => handleSelectRow(row.id)}
                       aria-label={`Select row ${row.id}`}
                       className="align-middle w-4 h-4 accent-brand-500"
@@ -211,7 +214,10 @@ export default function AdminTable<T extends { id: string | number }>({
                   </TableCell>
                 ))}
                 {actions && (
-                  <TableCell className="px-5 py-3 whitespace-nowrap sm:px-6 align-middle">
+                  <TableCell
+                    className="px-5 py-3 whitespace-nowrap sm:px-6 align-middle"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {actions(row)}
                   </TableCell>
                 )}

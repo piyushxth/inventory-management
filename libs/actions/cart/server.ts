@@ -5,8 +5,9 @@ import "server-only";
 import mongoose, { type PipelineStage } from "mongoose";
 
 import { MAX_QTY_PER_ITEM, type CartItem as CartItemClient } from "./types";
-import connectMongoDB from "../connnectMongoDB";
-import { Cart, CartItem, ProductVariant } from "../models";
+
+import { Cart, CartItem, ProductVariant } from "../../models";
+import connectMongoDB from "@/libs/connnectMongoDB";
 
 function toObjectId(value: string): mongoose.Types.ObjectId | null {
   if (!mongoose.Types.ObjectId.isValid(value)) return null;

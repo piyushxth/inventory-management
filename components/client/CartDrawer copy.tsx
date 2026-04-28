@@ -8,8 +8,8 @@ import {
   selectCartItems,
   selectCartSubtotal,
   useCartStore,
-} from "@/libs/cart/store";
-import { MAX_QTY_PER_ITEM } from "@/libs/cart/types";
+} from "@/libs/actions/cart/store";
+import { MAX_QTY_PER_ITEM } from "@/libs/actions/cart/types";
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("en-US", {

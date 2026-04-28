@@ -22,7 +22,45 @@ import {
   ProductVariant,
   Size,
 } from "@/libs/models";
-import connectMongoDB from "./connnectMongoDB";
+import connectMongoDB from "@/libs/connnectMongoDB";
+
+// -----------------------------------------------------------------------
+// Product detail
+// -----------------------------------------------------------------------
+
+// Raw shapes coming out of the individual Mongoose queries. Kept local so the
+// public type surface in products.types.ts stays clean.
+type RawVariant = {
+  _id: mongoose.Types.ObjectId;
+  sku: string;
+  price: number;
+  salePrice: number | null;
+  inStock: number;
+  colorId: mongoose.Types.ObjectId;
+  sizeId: mongoose.Types.ObjectId;
+};
+
+type RawImage = {
+  _id: mongoose.Types.ObjectId;
+  url: string;
+  variantId: mongoose.Types.ObjectId | null;
+  sortOrder: number;
+  isPrimary: boolean;
+};
+
+type RawColor = {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  slug: string;
+  hexCode: string;
+};
+
+type RawSize = {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  slug: string;
+  sortOrder: number;
+};
 
 type RecommendationType = "related" | "trending" | "new";
 
@@ -386,44 +424,6 @@ export async function listProducts(
         : null,
   }));
 }
-
-// -----------------------------------------------------------------------
-// Product detail
-// -----------------------------------------------------------------------
-
-// Raw shapes coming out of the individual Mongoose queries. Kept local so the
-// public type surface in products.types.ts stays clean.
-type RawVariant = {
-  _id: mongoose.Types.ObjectId;
-  sku: string;
-  price: number;
-  salePrice: number | null;
-  inStock: number;
-  colorId: mongoose.Types.ObjectId;
-  sizeId: mongoose.Types.ObjectId;
-};
-
-type RawImage = {
-  _id: mongoose.Types.ObjectId;
-  url: string;
-  variantId: mongoose.Types.ObjectId | null;
-  sortOrder: number;
-  isPrimary: boolean;
-};
-
-type RawColor = {
-  _id: mongoose.Types.ObjectId;
-  name: string;
-  slug: string;
-  hexCode: string;
-};
-
-type RawSize = {
-  _id: mongoose.Types.ObjectId;
-  name: string;
-  slug: string;
-  sortOrder: number;
-};
 
 // Look up a single published product by slug. Returns null when the slug
 // doesn't exist or the product is unpublished — the caller is expected to
@@ -864,4 +864,146 @@ export async function getRecommendedProducts(params: {
   }
 
   return out;
+}
+
+export async function getAdminProducts() {
+  await connectMongoDB();
+
+  const pipeline: PipelineStage[] = [
+    {
+      $lookup: {
+        from: "productvariants",
+        localField: "_id",
+        foreignField: "productId",
+        as: "variants",
+      },
+    },
+    {
+      $lookup: {
+        from: "productimages",
+        localField: "_id",
+        foreignField: "productId",
+        as: "images",
+      },
+    },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "categoryId",
+        foreignField: "_id",
+        as: "category",
+      },
+    },
+    {
+      $lookup: {
+        from: "genders",
+        localField: "genderId",
+        foreignField: "_id",
+        as: "gender",
+      },
+    },
+    {
+      $addFields: {
+        variantCount: { $size: "$variants" },
+        imageCount: { $size: "$images" },
+
+        totalStock: {
+          $sum: {
+            $map: {
+              input: "$variants",
+              as: "v",
+              in: "$$v.inStock",
+            },
+          },
+        },
+
+        minPrice: {
+          $min: {
+            $map: {
+              input: "$variants",
+              as: "v",
+              in: "$$v.price",
+            },
+          },
+        },
+
+        maxPrice: {
+          $max: {
+            $map: {
+              input: "$variants",
+              as: "v",
+              in: "$$v.price",
+            },
+          },
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "productimages",
+        let: { pid: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$productId", "$$pid"] } } },
+          { $sort: { isPrimary: -1, sortOrder: 1 } },
+          { $limit: 1 },
+        ],
+        as: "primaryImage",
+      },
+    },
+    {
+      $unwind: { path: "$category", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $unwind: { path: "$gender", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $project: {
+        name: 1,
+        slug: 1,
+        isPublished: 1,
+        createdAt: 1,
+
+        category: {
+          name: "$category.name",
+          slug: "$category.slug",
+        },
+
+        gender: {
+          label: "$gender.label",
+          slug: "$gender.slug",
+        },
+
+        variantCount: 1,
+        imageCount: 1,
+        totalStock: 1,
+        minPrice: 1,
+        maxPrice: 1,
+
+        primaryImage: { $arrayElemAt: ["$primaryImage", 0] },
+      },
+    },
+    { $sort: { createdAt: -1 } },
+  ];
+
+  const products = await Product.aggregate(pipeline);
+
+  return products.map((p) => ({
+    id: String(p._id),
+    name: p.name,
+    slug: p.slug,
+    isPublished: p.isPublished,
+    createdAt: p.createdAt,
+
+    category: p.category ?? null,
+    gender: p.gender ?? null,
+
+    variantCount: p.variantCount,
+    imageCount: p.imageCount,
+    totalStock: p.totalStock,
+
+    minPrice: p.minPrice ?? 0,
+    maxPrice: p.maxPrice ?? 0,
+
+    primaryImageUrl: p.primaryImage?.url ?? null,
+  }));
 }

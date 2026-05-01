@@ -1,7 +1,7 @@
 import { ProductCard } from "@/components/client/ProductCard copy";
-import { getRecommendedProducts } from "@/libs/actions/products/read";
+import { getRecommendedProductsService } from "@/libs/services/product.service";
 
-type RecommendationType = "trending" | "related" | "new";
+type RecommendationType = "trending" | "related";
 
 type Props = {
   productId?: string;
@@ -16,9 +16,9 @@ export async function ProductRecommendations({
   categoryId,
   genderId,
   limit = 4,
-  type = "trending", // 👈 default behavior
+  type = "trending",
 }: Props) {
-  const items = await getRecommendedProducts({
+  const items = await getRecommendedProductsService({
     productId,
     categoryId,
     genderId,

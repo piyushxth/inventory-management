@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MAX_QTY_PER_ITEM } from "@/libs/cart/types";
+import { MAX_QTY_PER_ITEM } from "@/libs/actions/cart/types";
 
 // 24-char hex ObjectId. Server also double-checks with
 // mongoose.Types.ObjectId.isValid, but we reject early here to avoid the

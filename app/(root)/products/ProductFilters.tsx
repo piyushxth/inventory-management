@@ -152,9 +152,7 @@ export function ProductFilters({ options }: { options: ProductFilterOptions }) {
                 <span
                   className={
                     "text-sm " +
-                    (isChecked
-                      ? "text-neutral-900 dark:text-neutral-100"
-                      : "text-neutral-600 dark:text-neutral-400")
+                    (isChecked ? "text-neutral-900" : "text-neutral-600")
                   }
                 >
                   {c.name}
@@ -228,13 +226,7 @@ function CheckboxRow({
         onChange={onChange}
         className="h-4 w-4 rounded border-black/20 accent-black dark:accent-white"
       />
-      <span
-        className={
-          strong
-            ? "font-medium text-neutral-900 dark:text-neutral-100"
-            : "text-neutral-700 dark:text-neutral-300"
-        }
-      >
+      <span className={strong ? "font-medium text-neutral-700" : ""}>
         {label}
       </span>
     </label>

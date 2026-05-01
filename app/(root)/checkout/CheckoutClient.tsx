@@ -10,7 +10,7 @@ import {
   selectCartItems,
   selectCartSubtotal,
   useCartStore,
-} from "@/libs/cart/store";
+} from "@/libs/actions/cart/store";
 
 type ShippingFields = {
   fullName: string;
@@ -144,9 +144,7 @@ export function CheckoutClient() {
   if (!session?.user?.id) {
     return (
       <div className="rounded-lg border p-6">
-        <p className="mb-4 text-sm">
-          Please sign in to complete your order.
-        </p>
+        <p className="mb-4 text-sm">Please sign in to complete your order.</p>
         <Link
           href="/auth/client/login"
           className="inline-flex h-10 items-center rounded-full bg-neutral-900 px-5 text-sm font-medium text-white"

@@ -1,6 +1,6 @@
 "use client";
 
-import { selectCartCount, useCartStore } from "@/lib/cart/store";
+import { selectCartCount, useCartStore } from "@/libs/actions/cart/store";
 
 export function CartButton() {
   const count = useCartStore(selectCartCount);

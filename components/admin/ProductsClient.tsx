@@ -3,22 +3,42 @@
 import AdminTable, {
   AdminTableColumn,
 } from "@/components/admin/common/AdminTable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dropdown } from "./ui/dropdown/Dropdown";
 import { DropdownItem } from "./ui/dropdown/DropdownItem";
 import ProductActionModal from "./ProductsActionModels";
 import ProductGeneralModal from "./ProductGeneralModal";
+import { getProductBySlug } from "@/libs/actions/products/r";
+import { AdminProductTableItem, ProductDetail } from "@/libs/products.types";
 
 type ModalType = "actions" | "inventory" | "general" | "custom" | null;
 
-export default function ProductsClient({ products }: { products: any[] }) {
+export default function ProductsClient({
+  products,
+}: {
+  products: AdminProductTableItem[];
+}) {
   const [dropdownOpen, setDropdownOpen] = useState<string | number | null>(
     null,
   );
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(
+    null,
+  );
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
-  const columns: AdminTableColumn<any>[] = [
+  useEffect(() => {
+    if (activeModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [activeModal]);
+
+  const columns: AdminTableColumn<AdminProductTableItem>[] = [
     {
       header: "Name",
       render: (row) => (
@@ -49,7 +69,7 @@ export default function ProductsClient({ products }: { products: any[] }) {
     {
       header: "Status",
       render: (row) => {
-        const isActive = row.isPublished;
+        const isActive = row.isOnSale;
 
         return (
           <span
@@ -75,8 +95,19 @@ export default function ProductsClient({ products }: { products: any[] }) {
       <AdminTable
         columns={columns}
         data={products}
-        onRowClick={(row) => {
-          setSelectedProduct(row);
+        onRowClick={async (row) => {
+          setActiveModal("actions");
+
+          const fullProduct = await getProductBySlug(row.slug);
+          if (fullProduct) {
+            console.log("Fetched full product:", fullProduct);
+          } else {
+            console.log(
+              "Failed to fetch full product for slug:",
+              products[0].slug,
+            );
+          }
+          setSelectedProduct(fullProduct);
           setActiveModal("actions");
         }}
         actions={(row) => (
@@ -116,22 +147,26 @@ export default function ProductsClient({ products }: { products: any[] }) {
         )}
       />
 
-      {activeModal === "actions" && selectedProduct && (
-        <ProductActionModal
-          product={selectedProduct}
-          onClose={() => {
-            setActiveModal(null);
-            setSelectedProduct(null);
-          }}
-          onSelect={(type) => setActiveModal(type)}
-        />
-      )}
+      {selectedProduct && (
+        <>
+          {activeModal === "actions" && (
+            <ProductActionModal
+              product={selectedProduct}
+              onClose={() => {
+                setActiveModal(null);
+                setSelectedProduct(null);
+              }}
+              onSelect={(type) => setActiveModal(type)}
+            />
+          )}
 
-      {activeModal === "general" && selectedProduct && (
-        <ProductGeneralModal
-          product={selectedProduct}
-          onClose={() => setActiveModal("actions")} // go back
-        />
+          {activeModal === "general" && (
+            <ProductGeneralModal
+              product={selectedProduct}
+              onClose={() => setActiveModal(null)}
+            />
+          )}
+        </>
       )}
     </>
   );

@@ -5,16 +5,14 @@ import React from "react";
 
 import type { Metadata } from "next";
 
-import {
-  getProductFilterOptions,
-  listProducts,
-  parseSlugList,
-  parseSort,
-} from "@/libs/actions/products/read";
-
 import { ProductFilters } from "./ProductFilters";
 import { SortSelect } from "./SortSelect";
 import { ProductCard } from "@/components/client/ProductCard copy";
+import { parseSlugList, parseSort } from "@/libs/products.types";
+import {
+  getProductFilterOptions,
+  listProducts,
+} from "@/libs/actions/products/r";
 
 export const metadata: Metadata = {
   title: "Shop all · Ecommerce",

@@ -1,19 +1,10 @@
 "use client";
 
+import { ProductDetail, ProductGeneralInfo } from "@/libs/products.types";
 import { useState } from "react";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  category?: { name: string; slug: string };
-  gender?: { label: string; slug: string };
-  isPublished: boolean;
-};
-
 interface Props {
-  product: Product;
+  product: ProductDetail;
   onClose: () => void;
   onBack?: () => void; // optional: go back to actions modal
 }
@@ -23,13 +14,29 @@ export default function ProductGeneralModal({
   onClose,
   onBack,
 }: Props) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ProductGeneralInfo>({
+    id: product.id,
     name: product.name || "",
     slug: product.slug || "",
     description: product.description || "",
-    categorySlug: product.category?.slug || "",
-    genderSlug: product.gender?.slug || "",
-    isPublished: product.isPublished ?? true,
+    isOnSale: product.isOnSale || false,
+    category: {
+      id: product.category?.id || "",
+      name: product.category?.name || "",
+      slug: product.category?.slug || "",
+    },
+    gender: {
+      id: product.gender?.id || "",
+      label: product.gender?.label || "",
+      slug: product.gender?.slug || "",
+    },
+    images: product.images.map((img) => ({
+      id: img.id,
+      url: img.url,
+      isPrimary: img.isPrimary,
+      sortOrder: img.sortOrder,
+      variantId: img.variantId,
+    })),
   });
 
   const [loading, setLoading] = useState(false);
@@ -66,103 +73,122 @@ export default function ProductGeneralModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={onClose}
+    >
+      {/* Container */}
+      <div
+        className="w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <header className="sticky top-0 flex justify-between items-center p-6">
-          Edit General Information [{product.name}]
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="text-sm text-gray-500 hover:underline"
-            >
-              ← Back
-            </button>
-          )}
+        <header className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-10">
+          <h2 className="text-lg font-semibold">
+            Edit Product
+            <span className="text-gray-500 ml-1">[{product.name}]</span>
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+          >
+            ✕
+          </button>
         </header>
 
-        {/* Form */}
-        <div className="space-y-4 overflow-y-auto max-h-[70vh] px-6">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {/* Name */}
-          <div>
-            <label className="block text-sm mb-1">Name</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Name</label>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
           {/* Slug */}
-          <div>
-            <label className="block text-sm mb-1">Slug</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Slug</label>
             <input
               name="slug"
               value={form.slug}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm mb-1">Description</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              Description
+            </label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              rows={3}
+              rows={4}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm mb-1">Category</label>
-            <input
-              name="categorySlug"
-              value={form.categorySlug}
-              onChange={handleChange}
-              placeholder="e.g. shirts"
-              className="w-full border rounded px-3 py-2"
-            />
+          {/* Category + Gender Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <input
+                name="categorySlug"
+                value={form.category.slug}
+                onChange={handleChange}
+                placeholder="e.g. shirts"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                Gender
+              </label>
+              <input
+                name="genderSlug"
+                value={form.gender.slug}
+                onChange={handleChange}
+                placeholder="e.g. men"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
           </div>
 
-          {/* Gender */}
-          <div>
-            <label className="block text-sm mb-1">Gender</label>
-            <input
-              name="genderSlug"
-              value={form.genderSlug}
-              onChange={handleChange}
-              placeholder="e.g. men"
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
+          {/* Publish Toggle */}
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <p className="text-sm font-medium">Published</p>
+              <p className="text-xs text-gray-500">
+                Make this product visible to customers
+              </p>
+            </div>
 
-          {/* Publish */}
-          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               name="isPublished"
-              checked={form.isPublished}
+              checked={form.isOnSale}
               onChange={handleChange}
+              className="w-5 h-5"
             />
-            <label className="text-sm">Published</label>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-6 flex gap-3 justify-end">
-          <button onClick={onClose} className="px-4 py-2 rounded bg-gray-200">
-            Cancel
-          </button>
-
+        {/* Footer */}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-white">
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-2 rounded bg-blue-600 text-white"
+            className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>

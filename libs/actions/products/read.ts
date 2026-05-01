@@ -154,7 +154,7 @@ export async function listProducts(
       : Promise.resolve<mongoose.Types.ObjectId[]>([]),
   ]);
 
-  const productMatch: Record<string, unknown> = { isPublished: true };
+  const productMatch: Record<string, unknown> = { isOneSale: true };
   if (genderIds.length) productMatch.genderId = { $in: genderIds };
   if (categoryIds.length) productMatch.categoryId = { $in: categoryIds };
 
@@ -440,7 +440,7 @@ export async function getProductBySlug(
   // image lists (not derived aggregates), and each collection is indexed on
   // productId, so four round trips to a local mongo are negligible and the
   // code stays debuggable.
-  const product = await Product.findOne({ slug, isPublished: true })
+  const product = await Product.findOne({ slug, isOnSale: true })
     .populate<{ categoryId: RawColor & { parentId: unknown } }>({
       path: "categoryId",
       select: "name slug",
@@ -634,7 +634,7 @@ export async function getRecommendedProducts(params: {
     {
       $match: {
         ...match,
-        isPublished: true,
+        isOnSale: true,
         _id: { $nin: [currentId, ...excludeIds] },
       },
     },
@@ -960,7 +960,7 @@ export async function getAdminProducts() {
       $project: {
         name: 1,
         slug: 1,
-        isPublished: 1,
+        isOnSale: 1,
         createdAt: 1,
 
         category: {
@@ -991,7 +991,7 @@ export async function getAdminProducts() {
     id: String(p._id),
     name: p.name,
     slug: p.slug,
-    isPublished: p.isPublished,
+    isOnSale: p.isOnSale,
     createdAt: p.createdAt,
 
     category: p.category ?? null,

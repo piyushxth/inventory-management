@@ -8,8 +8,8 @@ import {
   selectCartItems,
   selectCartSubtotal,
   useCartStore,
-} from "@/lib/cart/store";
-import { MAX_QTY_PER_ITEM } from "@/lib/cart/types";
+} from "@/libs/actions/cart/store";
+import { MAX_QTY_PER_ITEM } from "@/libs/actions/cart/types";
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -112,10 +112,7 @@ export function CartDrawer() {
         ) : (
           <ul className="flex-1 divide-y divide-neutral-200 overflow-y-auto dark:divide-neutral-800">
             {items.map((item) => (
-              <li
-                key={item.variantId}
-                className="flex gap-4 px-5 py-4"
-              >
+              <li key={item.variantId} className="flex gap-4 px-5 py-4">
                 <Link
                   href={`/products/${item.productSlug}`}
                   onClick={close}

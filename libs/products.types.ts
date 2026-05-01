@@ -111,8 +111,60 @@ export function parseSlugList(value: string | string[] | undefined): string[] {
 
 export function parseSort(value: string | string[] | undefined): SortKey {
   const v = Array.isArray(value) ? value[0] : value;
-  if (v === "price-desc" || v === "price-asc" || v === "name-asc" || v === "newest") {
+  if (
+    v === "price-desc" ||
+    v === "price-asc" ||
+    v === "name-asc" ||
+    v === "newest"
+  ) {
     return v;
   }
   return DEFAULT_SORT;
 }
+
+export type AdminProductTableItem = {
+  id: string;
+  name: string;
+  slug: string;
+  minPrice: number;
+  maxPrice: number;
+  totalStock: number;
+  imageCount: number;
+  gender: { label: string; slug: string } | null;
+  category: { name: string; slug: string } | null;
+  variantCount: number;
+  isOnSale: boolean;
+  primaryImageUrl: string | null;
+  createdAt: string;
+};
+
+export type ProductGeneralInfo = {
+  id: string;
+
+  name: string;
+  slug: string;
+  description: string;
+
+  isOnSale: boolean;
+
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+
+  gender: {
+    id: string;
+    label: string;
+    slug: string;
+  };
+
+  // optional but useful
+  images: {
+    id: string;
+    url: string;
+    isPrimary: boolean;
+    sortOrder: number;
+    variantId?: string | null;
+  }[];
+};

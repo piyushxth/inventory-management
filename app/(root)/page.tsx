@@ -13,8 +13,8 @@ export default async function Home() {
   return (
     <div>
       <Hero />
-      <Collections />
       <ProductRecommendations />
+      <Collections />
       <Features />
       <HeroVideo />
       <MediaCard />

@@ -20,8 +20,14 @@ export default function ProductActionModal({
   onSelect,
 }: ProductActionModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md bg-white rounded-xl shadow-xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <h2 className="text-lg font-semibold mb-6 text-gray-800">
           Products Action — {product.name}

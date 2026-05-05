@@ -23,7 +23,6 @@ type GetRecommendedParams = {
 
 export async function aggregateProducts(params: AggregateProductsParams) {
   await connectMongoDB();
-
   const {
     match = {},
     colorIds = [],
@@ -170,7 +169,7 @@ export async function aggregateProducts(params: AggregateProductsParams) {
     $project: {
       name: 1,
       slug: 1,
-      isPublished: 1,
+      isOnSale: 1,
       createdAt: 1,
       updatedAt: 1,
 
@@ -185,6 +184,8 @@ export async function aggregateProducts(params: AggregateProductsParams) {
   });
 
   const result = await Product.aggregate(pipeline);
+  console.log("Products:", result);
+  console.log("MATCH:", match);
 
   return result;
 }
@@ -194,13 +195,12 @@ export async function findProductBySlugRepo(slug: string) {
 
   const result = await Product.aggregate([
     // 1. Match product
+
     {
       $match: {
         slug,
-        isPublished: true,
       },
     },
-
     // 2. Variants
     {
       $lookup: {
@@ -236,6 +236,15 @@ export async function findProductBySlugRepo(slug: string) {
         localField: "variants.sizeId",
         foreignField: "_id",
         as: "variants.sizeId",
+      },
+    },
+    // 🔥 2.6 Lookup images for each variant
+    {
+      $lookup: {
+        from: "productimages",
+        localField: "variants._id",
+        foreignField: "variantId",
+        as: "variants.images",
       },
     },
 
@@ -338,6 +347,7 @@ export async function findProductBySlugRepo(slug: string) {
         gender: 1,
 
         variants: 1,
+        isOnSale: 1,
         images: 1,
 
         basePrice: 1,
@@ -361,7 +371,7 @@ export async function findRecommendedProductsRepo({
   const currentId = productId ? new mongoose.Types.ObjectId(productId) : null;
 
   const match: Record<string, any> = {
-    isPublished: true,
+    isOnSale: true,
   };
 
   // ✅ related filter
@@ -565,9 +575,9 @@ export async function findAdminProductsRepo() {
   await connectMongoDB();
 
   const pipeline: PipelineStage[] = [
-    {
-      $match: { isPublished: true },
-    },
+    // {
+    //   $match: { isOnSale: true },
+    // },
 
     // 🔗 Variants
     {
@@ -668,18 +678,7 @@ export async function findAdminProductsRepo() {
         minPrice: 1,
         maxPrice: 1,
 
-        isOnSale: {
-          $cond: [
-            {
-              $and: [
-                { $ne: ["$minSalePrice", null] },
-                { $lt: ["$minSalePrice", "$minPrice"] },
-              ],
-            },
-            true,
-            false,
-          ],
-        },
+        isOnSale: 1,
 
         primaryImageUrl: "$primaryImage.url",
       },

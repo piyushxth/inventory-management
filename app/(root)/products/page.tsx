@@ -42,6 +42,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     getProductFilterOptions(),
     listProducts(query),
   ]);
+  console.log(products.map((p) => p.name));
 
   const totalFiltersApplied =
     query.genders.length +

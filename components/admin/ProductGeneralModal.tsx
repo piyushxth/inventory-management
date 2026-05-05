@@ -1,75 +1,63 @@
 "use client";
 
-import { ProductDetail, ProductGeneralInfo } from "@/libs/products.types";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productGeneralSchema } from "@/libs/validations/product";
+import { updateProductGeneral } from "@/libs/actions/products/write";
+import { ProductDetail, ProductGeneralFormValues } from "@/libs/products.types";
+import ComponentCard from "./common/ComponentCard";
+import Label from "./form/Label";
+import Input from "./form/input/InputField";
+import TextArea from "./form/input/TextArea";
+import Checkbox from "./form/input/Checkbox";
+import Select from "./form/Select";
 
-interface Props {
+type Props = {
   product: ProductDetail;
+  categories: { id: string; name: string; slug: string }[];
+  genders: { id: string; label: string; slug: string }[];
   onClose: () => void;
-  onBack?: () => void; // optional: go back to actions modal
-}
+};
 
 export default function ProductGeneralModal({
   product,
+  categories,
+  genders,
   onClose,
-  onBack,
 }: Props) {
-  const [form, setForm] = useState<ProductGeneralInfo>({
-    id: product.id,
-    name: product.name || "",
-    slug: product.slug || "",
-    description: product.description || "",
-    isOnSale: product.isOnSale || false,
-    category: {
-      id: product.category?.id || "",
-      name: product.category?.name || "",
-      slug: product.category?.slug || "",
+  const [serverError, setServerError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<ProductGeneralFormValues>({
+    resolver: zodResolver(productGeneralSchema),
+    defaultValues: {
+      id: product.id,
+      name: product.name || "",
+      slug: product.slug || "",
+      description: product.description || "",
+      isOnSale: product.isOnSale ?? false,
+      categoryId: product.category?.id || "",
+      genderId: product.gender?.id || "",
     },
-    gender: {
-      id: product.gender?.id || "",
-      label: product.gender?.label || "",
-      slug: product.gender?.slug || "",
-    },
-    images: product.images.map((img) => ({
-      id: img.id,
-      url: img.url,
-      isPrimary: img.isPrimary,
-      sortOrder: img.sortOrder,
-      variantId: img.variantId,
-    })),
   });
 
-  const [loading, setLoading] = useState(false);
+  async function onSubmit(data: ProductGeneralFormValues) {
+    console.log("Submitting form with data:", data);
+    setServerError("");
 
-  function handleChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) {
-    const { name, value, type } = e.target;
+    const res = await updateProductGeneral(data);
 
-    setForm((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
-  }
-
-  async function handleSubmit() {
-    try {
-      setLoading(true);
-
-      // 🔥 call your write action here
-      // await updateProductGeneral(product.id, form);
-
-      console.log("Submitting:", product.id, form);
-
-      onClose(); // close after save
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (!res.success) {
+      setServerError("Failed to update product");
+      return;
     }
+
+    onClose();
   }
 
   return (
@@ -77,16 +65,17 @@ export default function ProductGeneralModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
-      {/* Container */}
       <div
-        className="w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
+        className="w-full max-w-2xl max-h-[85vh] bg-white dark:bg-gray-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-10">
-          <h2 className="text-lg font-semibold">
+        <header className="flex items-center justify-between px-6 py-4 border-b bg-white dark:bg-gray-700 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold dark:text-white">
             Edit Product
-            <span className="text-gray-500 ml-1">[{product.name}]</span>
+            <span className="text-gray-600 dark:text-gray-400 ml-1">
+              [{product.name}]
+            </span>
           </h2>
 
           <button
@@ -96,102 +85,126 @@ export default function ProductGeneralModal({
             ✕
           </button>
         </header>
+        <div className="px-6  py-4 overflow-y-auto">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Name */}
+            <ComponentCard>
+              <div>
+                <Label>Name</Label>
+                <Input {...register("name")} />
+                {errors.name && <p>{errors.name.message}</p>}
+              </div>
+              {/* Slug */}
+              <div>
+                <Label>Slug</Label>
+                <Input {...register("slug")} />
+                {errors.slug && <p>{errors.slug.message}</p>}
+              </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Name */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Name</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+              {/* Description */}
+              <div>
+                <Label>Description</Label>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div>
+                      <TextArea
+                        placeholder="Enter description"
+                        rows={4}
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={!!fieldState.error}
+                      />
+                      {fieldState.error && <p>{fieldState.error.message}</p>}
+                    </div>
+                  )}
+                />
+                {errors.description && <p>{errors.description.message}</p>}
+              </div>
+            </ComponentCard>
 
-          {/* Slug */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Slug</label>
-            <input
-              name="slug"
-              value={form.slug}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              rows={4}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-            />
-          </div>
-
-          {/* Category + Gender Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Category
-              </label>
-              <input
-                name="categorySlug"
-                value={form.category.slug}
-                onChange={handleChange}
-                placeholder="e.g. shirts"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Gender
-              </label>
-              <input
-                name="genderSlug"
-                value={form.gender.slug}
-                onChange={handleChange}
-                placeholder="e.g. men"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Publish Toggle */}
-          <div className="flex items-center justify-between p-3 border rounded-lg">
+            {/* Category */}
             <div>
-              <p className="text-sm font-medium">Published</p>
-              <p className="text-xs text-gray-500">
-                Make this product visible to customers
-              </p>
+              <Label>Category</Label>
+              <Controller
+                name="categoryId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    options={[
+                      { label: "Select category", value: "" },
+                      ...categories.map((c) => ({
+                        label: c.name,
+                        value: c.id,
+                      })),
+                    ]}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.categoryId && <p>{errors.categoryId.message}</p>}
             </div>
 
-            <input
-              type="checkbox"
-              name="isPublished"
-              checked={form.isOnSale}
-              onChange={handleChange}
-              className="w-5 h-5"
-            />
-          </div>
-        </div>
+            {/* Gender */}
+            <div>
+              <Label>Gender</Label>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-white">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
+              <Controller
+                name="genderId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    options={[
+                      { label: "Select Gender", value: "" },
+                      ...genders.map((c) => ({
+                        label: c.label,
+                        value: c.id,
+                      })),
+                    ]}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.genderId && <p>{errors.genderId.message}</p>}
+            </div>
+
+            {/* On Sale */}
+            <div>
+              <Controller
+                name="isOnSale"
+                control={control}
+                render={({ field }) => {
+                  console.log("checkbox value:", field.value);
+                  return (
+                    <Checkbox
+                      label="On Sale"
+                      checked={field.value}
+                      onChange={(checked) => field.onChange(checked)} // 👈 FIX
+                      className="text-black"
+                    />
+                  );
+                }}
+              />
+            </div>
+
+            {/* Server Error */}
+            {serverError && <p style={{ color: "red" }}>{serverError}</p>}
+
+            {/* Buttons */}
+            <div className="flex gap-2.5">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="border text-sm
+              rounded-lg bg-blue-500 hover:bg-blue-600 py-2 px-3"
+              >
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

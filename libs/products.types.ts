@@ -2,6 +2,8 @@
 // Kept separate from products.ts (which imports mongoose) so client components
 // can share these without pulling Node-only modules into the browser bundle.
 
+import { ObjectId } from "mongoose";
+
 export type SortKey = "newest" | "price-desc" | "price-asc" | "name-asc";
 
 export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -77,6 +79,7 @@ export type ProductDetailVariant = {
   inStock: number;
   color: { id: string; name: string; slug: string; hexCode: string };
   size: { id: string; name: string; slug: string; sortOrder: number };
+  images: ProductDetailImage[];
 };
 
 export type ProductDetail = {
@@ -137,8 +140,19 @@ export type AdminProductTableItem = {
   primaryImageUrl: string | null;
   createdAt: string;
 };
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+};
 
-export type ProductGeneralInfo = {
+export type Gender = {
+  id: string;
+  label: string;
+  slug: string;
+};
+
+export type ProductGeneralFormValues = {
   id: string;
 
   name: string;
@@ -146,25 +160,76 @@ export type ProductGeneralInfo = {
   description: string;
 
   isOnSale: boolean;
+  categoryId: string;
+  genderId: string;
+};
 
-  category: {
+export type VariantImageInput = {
+  id?: string;
+  url: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
+
+export type VariantInput = {
+  id?: string; // for existing variants
+
+  colorId: string | null;
+  sizeId: string | null;
+
+  sku: string;
+  price: number;
+  salePrice?: number | null;
+  inStock: number;
+
+  images: VariantImageInput[];
+};
+
+export type ProductVariantsModalForm = {
+  productId: string;
+
+  colorIds: string[];
+  sizeIds: string[];
+
+  variants: VariantInput[];
+};
+
+export type Color = {
+  id: string;
+  name: string;
+  slug: string;
+  hexCode: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type Size = {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ProductVariantInput = {
+  id: string;
+  sku: string;
+  price: number;
+  salePrice?: number | null;
+  inStock: number;
+
+  color: {
     id: string;
-    name: string;
-    slug: string;
   };
 
-  gender: {
+  size: {
     id: string;
-    label: string;
-    slug: string;
   };
 
-  // optional but useful
   images: {
     id: string;
     url: string;
     isPrimary: boolean;
     sortOrder: number;
-    variantId?: string | null;
   }[];
 };

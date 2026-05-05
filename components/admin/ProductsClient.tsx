@@ -9,7 +9,15 @@ import { DropdownItem } from "./ui/dropdown/DropdownItem";
 import ProductActionModal from "./ProductsActionModels";
 import ProductGeneralModal from "./ProductGeneralModal";
 import { getProductBySlug } from "@/libs/actions/products/r";
-import { AdminProductTableItem, ProductDetail } from "@/libs/products.types";
+import {
+  AdminProductTableItem,
+  Category,
+  Gender,
+  ProductDetail,
+} from "@/libs/products.types";
+import { getCategories } from "@/libs/actions/categories/read";
+import { getGenders } from "@/libs/actions/genders/read";
+import ProductInventoryModal from "./ProductsInventoryModal";
 
 type ModalType = "actions" | "inventory" | "general" | "custom" | null;
 
@@ -24,6 +32,9 @@ export default function ProductsClient({
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(
     null,
   );
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [genders, setGenders] = useState<Gender[]>([]);
+
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   useEffect(() => {
@@ -37,6 +48,17 @@ export default function ProductsClient({
       document.body.style.overflow = "auto";
     };
   }, [activeModal]);
+
+  useEffect(() => {
+    async function fetchMeta() {
+      const [cats, gens] = await Promise.all([getCategories(), getGenders()]);
+
+      setCategories(cats);
+      setGenders(gens);
+    }
+
+    fetchMeta();
+  }, []);
 
   const columns: AdminTableColumn<AdminProductTableItem>[] = [
     {
@@ -99,16 +121,10 @@ export default function ProductsClient({
           setActiveModal("actions");
 
           const fullProduct = await getProductBySlug(row.slug);
-          if (fullProduct) {
-            console.log("Fetched full product:", fullProduct);
-          } else {
-            console.log(
-              "Failed to fetch full product for slug:",
-              products[0].slug,
-            );
-          }
+          console.log("Fetched Product Details:", fullProduct);
+          if (!fullProduct)
+            console.log("Failed to fetch product details for slug:", row.slug);
           setSelectedProduct(fullProduct);
-          setActiveModal("actions");
         }}
         actions={(row) => (
           <div className="flex items-center justify-center relative">
@@ -146,7 +162,6 @@ export default function ProductsClient({
           </div>
         )}
       />
-
       {selectedProduct && (
         <>
           {activeModal === "actions" && (
@@ -162,6 +177,15 @@ export default function ProductsClient({
 
           {activeModal === "general" && (
             <ProductGeneralModal
+              product={selectedProduct!}
+              categories={categories}
+              genders={genders}
+              onClose={() => setActiveModal(null)}
+            />
+          )}
+
+          {activeModal === "inventory" && (
+            <ProductInventoryModal
               product={selectedProduct}
               onClose={() => setActiveModal(null)}
             />

@@ -57,7 +57,7 @@ export async function listProductsService(
   // 2. Build match (product-level filters)
 
   const match: Record<string, unknown> = {
-    isPublished: true,
+    isOnSale: true,
   };
 
   if (categoryIds.length) {
@@ -132,7 +132,8 @@ export async function listProductsService(
       quickAddVariant: null, // optional feature
     };
   });
-
+  console.log("Raw products from DB:", rawProducts);
+  console.log("Transformed products for UI:", products);
   return products;
 }
 
@@ -140,38 +141,59 @@ export async function getProductBySlugService(
   slug: string,
 ): Promise<ProductDetail | null> {
   if (!slug) return null;
-
   const product = await findProductBySlugRepo(slug);
   if (!product) return null;
 
   const rawVariants = (product.variants ?? []) as any[];
   const rawImages = (product.images ?? []) as any[];
+  console.log(
+    rawImages.map((img) => ({
+      id: img._id,
+      variantId: img.variantId,
+    })),
+  );
 
   // -------------------------
   // VARIANTS (STRICT TYPE)
   // -------------------------
-  const variants: ProductDetailVariant[] = rawVariants.map((v) => ({
-    id: String(v._id),
-    sku: v.sku,
-    price: v.price,
-    salePrice: v.salePrice ?? null,
-    inStock: v.inStock,
+  const variants: ProductDetailVariant[] = rawVariants.map((v) => {
+    const variantId = String(v._id);
 
-    color: {
-      id: String(v.colorId?._id),
-      name: v.colorId?.name ?? "",
-      slug: v.colorId?.slug ?? "",
-      hexCode: v.colorId?.hexCode ?? "",
-    },
+    const variantImages = rawImages
+      .filter((img) => String(img.variantId) === variantId)
+      .map((img) => ({
+        id: String(img._id),
+        url: img.url,
+        variantId: img.variantId ? String(img.variantId) : null,
+        colorSlug: v.colorId?.slug ?? null,
+        sortOrder: img.sortOrder ?? 0,
+        isPrimary: img.isPrimary ?? false,
+      }));
 
-    size: {
-      id: String(v.sizeId?._id),
-      name: v.sizeId?.name ?? "",
-      slug: v.sizeId?.slug ?? "",
-      sortOrder: v.sizeId?.sortOrder ?? 0,
-    },
-  }));
+    return {
+      id: variantId,
+      sku: v.sku,
+      price: v.price,
+      salePrice: v.salePrice ?? null,
+      inStock: v.inStock,
 
+      color: {
+        id: String(v.colorId?._id),
+        name: v.colorId?.name ?? "",
+        slug: v.colorId?.slug ?? "",
+        hexCode: v.colorId?.hexCode ?? "",
+      },
+
+      size: {
+        id: String(v.sizeId?._id),
+        name: v.sizeId?.name ?? "",
+        slug: v.sizeId?.slug ?? "",
+        sortOrder: v.sizeId?.sortOrder ?? 0,
+      },
+
+      images: variantImages, // ✅ KEY FIX
+    };
+  });
   // -------------------------
   // IMAGE MAPPING (FIXED)
   // -------------------------
@@ -235,9 +257,7 @@ export async function getProductBySlugService(
   const price = prices.length ? Math.min(...prices) : 0;
   const effective = effectivePrices.length ? Math.min(...effectivePrices) : 0;
 
-  const isOnSale =
-    variants.some((v) => v.salePrice && v.salePrice < v.price) &&
-    effective < price;
+  const isOnSale = product.isOnSale;
 
   // -------------------------
   // FINAL RETURN (STRICT TYPE)

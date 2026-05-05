@@ -15,6 +15,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  console.log("Generating metadata for product:", product);
   if (!product) return { title: "Product not found · Ecommerce" };
   return {
     title: `${product.name} · Ecommerce`,

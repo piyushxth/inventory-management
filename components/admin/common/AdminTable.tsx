@@ -95,7 +95,7 @@ export default function AdminTable<T extends { id: string | number }>({
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Table
         </h3>
-        <form className="flex-1 max-w-xs">
+        <form className="flex-1 max-w-xs" onSubmit={(e) => e.preventDefault()}>
           <div className="relative">
             <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2">
               <svg
@@ -194,7 +194,7 @@ export default function AdminTable<T extends { id: string | number }>({
                       onClick={(e) => e.stopPropagation()}
                       onChange={() => handleSelectRow(row.id)}
                       aria-label={`Select row ${row.id}`}
-                      className="align-middle w-4 h-4 accent-brand-500"
+                      className="align-middle w-4 h-4 accent-brand-500 cursor-pointer"
                     />
                   </div>
                 </TableCell>

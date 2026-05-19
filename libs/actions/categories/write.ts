@@ -6,7 +6,7 @@ import {
   CategoryCreateSchema,
   categorySchema,
 } from "@/libs/validations/category";
-import { Category } from "@/libs/models/Category";
+import { Category } from "@/libs/models/category";
 import { CategoryType } from "@/libs/products.types";
 
 export async function updateCategory(data: CategoryType) {

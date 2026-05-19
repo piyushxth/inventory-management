@@ -1,6 +1,6 @@
 "use server";
 
-import { Product } from "@/libs/models/Product";
+import { Product } from "@/libs/models/product";
 import { revalidatePath } from "next/cache";
 import { productGeneralSchema } from "@/libs/validations/product";
 

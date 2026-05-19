@@ -5,7 +5,11 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { productGeneralSchema } from "@/libs/validations/product";
 import { updateProductGeneral } from "@/libs/actions/products/write";
-import { ProductDetail, ProductGeneralFormValues } from "@/libs/products.types";
+import {
+  CategoryType,
+  ProductDetail,
+  ProductGeneralFormValues,
+} from "@/libs/products.types";
 import ComponentCard from "./common/ComponentCard";
 import Label from "./form/Label";
 import Input from "./form/input/InputField";
@@ -15,7 +19,7 @@ import Select from "./form/Select";
 
 type Props = {
   product: ProductDetail;
-  categories: { id: string; name: string; slug: string }[];
+  categories: CategoryType[];
   genders: { id: string; label: string; slug: string }[];
   onClose: () => void;
 };

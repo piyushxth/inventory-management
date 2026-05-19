@@ -6,19 +6,16 @@ import {
   ProductVariantsModalForm,
   Size,
 } from "@/libs/products.types";
-import { ProductVariantsModalSchema } from "@/libs/validations/product";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-import ComponentCard from "./common/ComponentCard";
-import Label from "./form/Label";
-import Input from "./form/input/InputField";
-import TextArea from "./form/input/TextArea";
-import Checkbox from "./form/input/Checkbox";
-import Select from "./form/Select";
-import { useEffect, useState } from "react";
+import {
+  ProductVariantsSchema,
+  VariantSchema,
+} from "@/libs/validations/product";
+
+import { useEffect, useRef, useState } from "react";
 import { getColors } from "@/libs/actions/colors/read";
 import { getSizes } from "@/libs/actions/sizes/read";
 import VariantImageModal from "./VariantImageModal";
+import { updateProductVariantsWithImages } from "@/libs/actions/variants/write";
 
 type Props = {
   product: ProductDetail;
@@ -85,8 +82,74 @@ function generateVariantRows(colorIds: string[], sizeIds: string[]) {
   return [];
 }
 
+function validateVariants(variantMap: VariantMap) {
+  const errors: Record<string, string> = {};
+
+  const variants = Object.entries(variantMap).map(([key, v]) => {
+    const [colorId, sizeId] = key.split("-");
+
+    return {
+      key,
+      data: {
+        id: v.id,
+        colorId,
+        sizeId,
+        sku: v.sku,
+        price: v.price,
+        salePrice: v.salePrice ?? null,
+        inStock: v.inStock,
+        images: v.images ?? [],
+      },
+    };
+  });
+
+  const skuMap = new Map<string, string>();
+  variants.forEach(({ key, data }) => {
+    if (!data.sku) return;
+
+    // 🔥 normalize
+    const normalizedSku = data.sku.trim().toUpperCase();
+
+    if (skuMap.has(normalizedSku)) {
+      // current field
+      errors[`${key}.sku`] = "Duplicate SKU";
+
+      // original field
+      const originalKey = skuMap.get(normalizedSku)!;
+      errors[`${originalKey}.sku`] = "Duplicate SKU";
+    } else {
+      skuMap.set(normalizedSku, key);
+    }
+  });
+
+  variants.forEach(({ key, data }) => {
+    const isEmpty =
+      data.sku.trim() === "" &&
+      data.price === 0 &&
+      data.inStock === 0 &&
+      data.images.length === 0;
+
+    if (isEmpty) return;
+
+    const result = VariantSchema.safeParse(data);
+
+    if (!result.success) {
+      result.error.errors.forEach((err) => {
+        const field = err.path[0];
+        errors[`${key}.${field}`] = err.message;
+      });
+    }
+
+    if (data.salePrice && data.salePrice > data.price) {
+      errors[`${key}.salePrice`] = "Sale price cannot exceed price";
+    }
+  });
+
+  return errors;
+}
+
 export default function ProductInventoryModal({ product, onClose }: Props) {
-  console.log("Product:", product);
+  // console.log("Product:", product);
   const [allColors, setAllColors] = useState<Color[]>([]);
   const [allSizes, setAllSizes] = useState<Size[]>([]);
   const [selectedColorIds, setSelectedColorIds] = useState<string[]>([]);
@@ -99,9 +162,32 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
   const [variantMap, setVariantMap] = useState<VariantMap>(() =>
     buildInitialVariantMap(product.variants),
   );
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const rows = generateVariantRows(selectedColorIds, selectedSizeIds);
 
   const [activeVariantKey, setActiveVariantKey] = useState<string | null>(null);
+  const initialPayloadRef = useRef("");
+
+  useEffect(() => {
+    const initialVariants = Object.entries(
+      buildInitialVariantMap(product.variants),
+    ).map(([key, v]) => {
+      const [colorId, sizeId] = key.split("-");
+
+      return {
+        id: v.id,
+        colorId,
+        sizeId,
+        sku: v.sku,
+        price: v.price,
+        salePrice: v.salePrice ?? null,
+        inStock: v.inStock,
+        images: v.images ?? [],
+      };
+    });
+
+    initialPayloadRef.current = JSON.stringify(initialVariants);
+  }, [product]);
 
   function openImageModal(key: string) {
     setActiveVariantKey(key);
@@ -137,25 +223,89 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
     setSelectedSizeIds(sizes);
   }, [product]);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<ProductVariantsModalForm>({
-    resolver: zodResolver(ProductVariantsModalSchema),
-    defaultValues: {
-      productId: product.id,
-      colorIds: unique(product.variants.map((v) => v.color.id)),
-      sizeIds: unique(product.variants.map((v) => v.size.id)),
-    },
-  });
+  const [submitError, setSubmitError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  async function onSubmit(data: ProductVariantsModalForm) {
-    console.log("Submitting form with data:", data);
+  async function onSubmit() {
+    try {
+      setSubmitError("");
 
-    onClose();
+      const variants = Object.entries(variantMap)
+        .map(([key, v]) => {
+          const [colorId, sizeId] = key.split("-");
+
+          return {
+            id: v.id,
+            colorId,
+            sizeId,
+            sku: v.sku.trim().toUpperCase(),
+            price: v.price,
+            salePrice: v.salePrice ?? null,
+            inStock: v.inStock,
+
+            // normalize image sort order
+            images: (v.images ?? []).map((img, index) => ({
+              ...img,
+              sortOrder: index,
+            })),
+          };
+        })
+
+        // 🔥 remove completely empty rows
+        .filter(
+          (v) => v.sku || v.price > 0 || v.inStock > 0 || v.images.length > 0,
+        );
+
+      // -----------------------------------
+      // VALIDATION
+      // -----------------------------------
+      const currentSnapshot = JSON.stringify(variants);
+
+      if (currentSnapshot === initialPayloadRef.current) {
+        // console.log("No changes detected");
+
+        onClose();
+        return;
+      }
+
+      const errors = validateVariants(variantMap);
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        return;
+      }
+
+      setFieldErrors({});
+
+      // -----------------------------------
+      // PAYLOAD
+      // -----------------------------------
+
+      const payload = {
+        productId: product.id,
+        variants,
+      };
+
+      console.log("FINAL PAYLOAD 🚀", payload);
+
+      // -----------------------------------
+      // SAVE
+      // -----------------------------------
+
+      setIsSaving(true);
+
+      await updateProductVariantsWithImages(payload);
+
+      onClose();
+    } catch (error) {
+      console.error(error);
+
+      setSubmitError("Failed to save variants");
+    } finally {
+      setIsSaving(false);
+    }
   }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -182,7 +332,13 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
           </button>
         </header>
         <div className="px-6  py-4 overflow-y-auto">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSubmit();
+            }}
+            className="space-y-6"
+          >
             <div className="overflow-x-auto border rounded-lg">
               <div className="space-y-4">
                 {/* COLORS */}
@@ -292,6 +448,7 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
                       <th className="p-2">Variants</th>
                       <th className="p-2">Price</th>
                       <th className="p-2">Stock</th>
+                      <th className="p-2">Sku</th>
                     </tr>
                   </thead>
 
@@ -339,8 +496,17 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
                                   price: Number(e.target.value),
                                 })
                               }
-                              className="border p-1 w-full"
+                              className={`border p-1 w-full ${
+                                fieldErrors[`${key}.price`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
                             />
+                            {fieldErrors[`${key}.price`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {fieldErrors[`${key}.price`]}
+                              </p>
+                            )}
                           </td>
 
                           <td className="p-2">
@@ -352,8 +518,39 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
                                   inStock: Number(e.target.value),
                                 })
                               }
-                              className="border p-1 w-full"
+                              className={`border p-1 w-full ${
+                                fieldErrors[`${key}.inStock`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
                             />
+                            {fieldErrors[`${key}.inStock`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {fieldErrors[`${key}.inStock`]}
+                              </p>
+                            )}
+                          </td>
+
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              value={data?.sku ?? ""}
+                              onChange={(e) =>
+                                updateVariant(key, {
+                                  sku: e.target.value,
+                                })
+                              }
+                              className={`border p-1 w-full ${
+                                fieldErrors[`${key}.sku`]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                            {fieldErrors[`${key}.sku`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {fieldErrors[`${key}.sku`]}
+                              </p>
+                            )}
                           </td>
                         </tr>
                       );
@@ -365,11 +562,16 @@ export default function ProductInventoryModal({ product, onClose }: Props) {
 
             {/* Submit */}
             <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded"
+              type="button"
+              onClick={onSubmit}
+              disabled={isSaving}
+              className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
             >
-              Save Changes
+              {isSaving ? "Saving..." : "Save Variants"}
             </button>
+            {submitError && (
+              <p className="text-red-500 text-sm">{submitError}</p>
+            )}
             {activeVariantKey && (
               <VariantImageModal
                 images={variantMap[activeVariantKey]?.images || []}

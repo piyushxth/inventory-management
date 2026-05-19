@@ -6,8 +6,7 @@ import {
   listProductsService,
 } from "@/libs/services/product.service";
 import { getFilterOptionsService } from "@/libs/services/filter.service";
-import { ProductQuery } from "./read";
-import { AdminProductTableItem } from "@/libs/products.types";
+import { AdminProductTableItem, ProductQuery } from "@/libs/products.types";
 
 export async function listProducts(query: ProductQuery) {
   return listProductsService(query);

@@ -140,11 +140,12 @@ export type AdminProductTableItem = {
   primaryImageUrl: string | null;
   createdAt: string;
 };
-export type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
+
+// export type Category = {
+//   id: string;
+//   name: string;
+//   slug: string;
+// };
 
 export type Gender = {
   id: string;
@@ -154,11 +155,9 @@ export type Gender = {
 
 export type ProductGeneralFormValues = {
   id: string;
-
   name: string;
   slug: string;
   description: string;
-
   isOnSale: boolean;
   categoryId: string;
   genderId: string;
@@ -190,8 +189,6 @@ export type ProductVariantsModalForm = {
 
   colorIds: string[];
   sizeIds: string[];
-
-  variants: VariantInput[];
 };
 
 export type Color = {
@@ -232,4 +229,21 @@ export type ProductVariantInput = {
     isPrimary: boolean;
     sortOrder: number;
   }[];
+};
+
+// src/types/category.ts
+
+export type CategoryType = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CategoryOptionType = {
+  label: string;
+  value: string;
 };

@@ -1,3 +1,4 @@
+import PageBreadcrumb from "@/components/admin/common/PageBreadCrumb";
 import ProductsClient from "@/components/admin/ProductsClient";
 import { getAdminProducts } from "@/libs/actions/products/r";
 
@@ -6,7 +7,8 @@ export default async function page() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-4">Products</h1>
+      {/* <PageBreadcrumb pageTitle="Products" /> */}
+
       <ProductsClient products={products} />
     </div>
   );

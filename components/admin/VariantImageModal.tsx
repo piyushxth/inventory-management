@@ -14,23 +14,52 @@ type Props = {
   onSave: (images: VariantImage[]) => void;
 };
 
+async function uploadImages(files: File[]) {
+  const formData = new FormData();
+  formData.append("entityType", "products");
+
+  files.forEach((file) => {
+    formData.append("gallery", file);
+  });
+
+  const res = await fetch("/api/upload-demo", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    throw new Error("Upload failed");
+  }
+
+  return data.files.gallery as string[];
+}
+
 export default function VariantImageModal({
   images: initialImages,
   onClose,
   onSave,
 }: Props) {
-  console.log("Initial Images:", initialImages);
+  // console.log("Initial Images:", initialImages);
   const [images, setImages] = useState<VariantImage[]>(initialImages);
-  // 🔥 Handle uploaded files
-  const handleUpload = (files: File[]) => {
-    const newImages: VariantImage[] = files.map((file, index) => ({
-      id: crypto.randomUUID(),
-      url: URL.createObjectURL(file), // preview
-      isPrimary: images.length === 0 && index === 0,
-      sortOrder: images.length + index,
-    }));
 
-    setImages((prev) => [...prev, ...newImages]);
+  // 🔥 Handle uploaded files
+  const handleUpload = async (files: File[]) => {
+    try {
+      const uploadedUrls = await uploadImages(files);
+
+      const newImages: VariantImage[] = uploadedUrls.map((url, index) => ({
+        id: crypto.randomUUID(),
+        url, // ✅ REAL FILE PATH
+        isPrimary: images.length === 0 && index === 0,
+        sortOrder: images.length + index,
+      }));
+      // console.log("Newly Uploaded Images:", newImages);
+      setImages((prev) => [...prev, ...newImages]);
+    } catch (err) {
+      console.error("Upload failed:", err);
+    }
   };
 
   // ❌ Remove
@@ -47,17 +76,6 @@ export default function VariantImageModal({
       })),
     );
   };
-
-  // 🧹 Cleanup object URLs
-  useEffect(() => {
-    return () => {
-      images.forEach((img) => {
-        if (img.url.startsWith("blob:")) {
-          URL.revokeObjectURL(img.url);
-        }
-      });
-    };
-  }, [images]);
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

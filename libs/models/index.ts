@@ -2,14 +2,14 @@ export { User } from "./User";
 export { Gender } from "./Gender";
 export { Color } from "./Color";
 export { Size } from "./Size";
-export { Category } from "./Category";
-export { Product } from "./Product";
+export { Category } from "./category";
+export { Product } from "./product";
 export { ProductVariant } from "./ProductVariant";
 export { ProductImage } from "./ProductImage";
-export { Address } from "./Address";
-export { Cart } from "./Cart";
+export { Address } from "./address";
+export { Cart } from "./cart";
 export { CartItem } from "./CartItem";
-export { Order, ORDER_STATUSES, type OrderStatus } from "./Order";
+export { Order, ORDER_STATUSES, type OrderStatus } from "./order";
 export { OrderItem } from "./OrderItem";
 export {
   Payment,
@@ -18,5 +18,9 @@ export {
   type PaymentMethod,
   type PaymentStatus,
 } from "./Payment";
-export { Wishlist } from "./Wishlist";
-export { Coupon, COUPON_DISCOUNT_TYPES, type CouponDiscountType } from "./Coupon";
+export { Wishlist } from "./wishlist";
+export {
+  Coupon,
+  COUPON_DISCOUNT_TYPES,
+  type CouponDiscountType,
+} from "./coupon";

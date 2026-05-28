@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 
 import { ProductGallery } from "@/components/client/ProductGallery copy";
-import { useCartStore } from "@/libs/cart/store";
-import { MAX_QTY_PER_ITEM } from "@/libs/cart/types";
-import type { ProductDetail as ProductDetailType } from "@/libs/products.types";
+import { useCartStore } from "@/libs/actions/cart/store";
+import { MAX_QTY_PER_ITEM } from "@/libs/actions/cart/types";
+import type { ProductDetail } from "@/libs/products.types";
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -15,9 +15,10 @@ function formatPrice(value: number): string {
   }).format(value);
 }
 
-type Props = { product: ProductDetailType };
+type Props = { product: ProductDetail };
 
 export function ProductDetail({ product }: Props) {
+  console.log("mode:", useCartStore.getState().mode);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(
     product.colors[0]?.id ?? null,
   );

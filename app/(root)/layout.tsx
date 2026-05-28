@@ -7,6 +7,7 @@ import Navbody from "@/components/client/Navbody";
 import StickyTest from "@/components/client/demo";
 import Footer from "@/components/client/Footer";
 import ClientProviders from "@/components/client/ClientProviders";
+import { CartBootstrap } from "@/components/client/cart/CartBootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,8 @@ export default function RootLayout({
         <Navbody />
         <ClientProviders>
           <div className="relative">
+            <CartBootstrap />
+
             <Navbar />
             {children}
           </div>

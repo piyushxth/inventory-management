@@ -5,16 +5,14 @@ import React from "react";
 
 import type { Metadata } from "next";
 
-import {
-  getProductFilterOptions,
-  listProducts,
-  parseSlugList,
-  parseSort,
-} from "@/libs/products";
-
 import { ProductFilters } from "./ProductFilters";
 import { SortSelect } from "./SortSelect";
 import { ProductCard } from "@/components/client/ProductCard copy";
+import { parseSlugList, parseSort } from "@/libs/products.types";
+import {
+  getProductFilterOptions,
+  listProducts,
+} from "@/libs/actions/products/r";
 
 export const metadata: Metadata = {
   title: "Shop all · Ecommerce",
@@ -44,6 +42,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     getProductFilterOptions(),
     listProducts(query),
   ]);
+  console.log(products.map((p) => p.name));
 
   const totalFiltersApplied =
     query.genders.length +
@@ -133,8 +132,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           </div>
         </div>
       </div>
+
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Shop all

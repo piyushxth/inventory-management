@@ -1,6 +1,6 @@
 import { ProductDetail } from "@/components/client/ProductDetail";
 import { ProductRecommendations } from "@/components/client/ProductRecommendations";
-import { getProductBySlug } from "@/libs/products";
+import { getProductBySlug } from "@/libs/actions/products/r";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -15,6 +15,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  console.log("Generating metadata for product:", product);
   if (!product) return { title: "Product not found · Ecommerce" };
   return {
     title: `${product.name} · Ecommerce`,
@@ -25,7 +26,9 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+
   if (!product) notFound();
+
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
       <nav aria-label="Breadcrumb" className="mb-6 text-sm">

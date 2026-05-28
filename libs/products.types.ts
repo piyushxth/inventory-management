@@ -2,6 +2,8 @@
 // Kept separate from products.ts (which imports mongoose) so client components
 // can share these without pulling Node-only modules into the browser bundle.
 
+import { ObjectId } from "mongoose";
+
 export type SortKey = "newest" | "price-desc" | "price-asc" | "name-asc";
 
 export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -77,6 +79,7 @@ export type ProductDetailVariant = {
   inStock: number;
   color: { id: string; name: string; slug: string; hexCode: string };
   size: { id: string; name: string; slug: string; sortOrder: number };
+  images: ProductDetailImage[];
 };
 
 export type ProductDetail = {
@@ -111,8 +114,179 @@ export function parseSlugList(value: string | string[] | undefined): string[] {
 
 export function parseSort(value: string | string[] | undefined): SortKey {
   const v = Array.isArray(value) ? value[0] : value;
-  if (v === "price-desc" || v === "price-asc" || v === "name-asc" || v === "newest") {
+  if (
+    v === "price-desc" ||
+    v === "price-asc" ||
+    v === "name-asc" ||
+    v === "newest"
+  ) {
     return v;
   }
   return DEFAULT_SORT;
 }
+
+export type AdminProductTableItem = {
+  id: string;
+  name: string;
+  slug: string;
+  minPrice: number;
+  maxPrice: number;
+  totalStock: number;
+  imageCount: number;
+  gender: { label: string; slug: string } | null;
+  category: { name: string; slug: string } | null;
+  variantCount: number;
+  isOnSale: boolean;
+  primaryImageUrl: string | null;
+  createdAt: string;
+};
+
+export const ORDER_STATUSES = [
+  "pending",
+  "paid",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export type AdminOrderTableItem = {
+  id: string;
+
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+
+  status: OrderStatus;
+
+  totalAmount: number;
+
+  itemCount: number;
+
+  contactEmail: string;
+
+  shippingAddress: {
+    id: string;
+    label?: string;
+  } | null;
+
+  billingAddress: {
+    id: string;
+    label?: string;
+  } | null;
+
+  notes: string;
+
+  createdAt: string;
+};
+
+// export type Category = {
+//   id: string;
+//   name: string;
+//   slug: string;
+// };
+
+export type Gender = {
+  id: string;
+  label: string;
+  slug: string;
+};
+
+export type ProductGeneralFormValues = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  isOnSale: boolean;
+  categoryId: string;
+  genderId: string;
+};
+
+export type VariantImageInput = {
+  id?: string;
+  url: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
+
+export type VariantInput = {
+  id?: string; // for existing variants
+
+  colorId: string | null;
+  sizeId: string | null;
+
+  sku: string;
+  price: number;
+  salePrice?: number | null;
+  inStock: number;
+
+  images: VariantImageInput[];
+};
+
+export type ProductVariantsModalForm = {
+  productId: string;
+
+  colorIds: string[];
+  sizeIds: string[];
+};
+
+export type Color = {
+  id: string;
+  name: string;
+  slug: string;
+  hexCode: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type Size = {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ProductVariantInput = {
+  id: string;
+  sku: string;
+  price: number;
+  salePrice?: number | null;
+  inStock: number;
+
+  color: {
+    id: string;
+  };
+
+  size: {
+    id: string;
+  };
+
+  images: {
+    id: string;
+    url: string;
+    isPrimary: boolean;
+    sortOrder: number;
+  }[];
+};
+
+// src/types/category.ts
+
+export type CategoryType = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CategoryOptionType = {
+  label: string;
+  value: string;
+};

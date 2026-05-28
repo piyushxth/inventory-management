@@ -2,7 +2,13 @@ import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 const productSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true, maxlength: 200, index: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
+      index: true,
+    },
     slug: {
       type: String,
       required: true,
@@ -24,7 +30,7 @@ const productSchema = new Schema(
       required: true,
       index: true,
     },
-    isPublished: { type: Boolean, default: true, index: true },
+    isOnSale: { type: Boolean, default: true, index: true },
   },
   { timestamps: true },
 );

@@ -42,7 +42,9 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
-export type UserDoc = InferSchemaType<typeof userSchema> & { _id: mongoose.Types.ObjectId };
+export type UserDoc = InferSchemaType<typeof userSchema> & {
+  _id: mongoose.Types.ObjectId;
+};
 
 export const User: Model<UserDoc> =
   (mongoose.models.User as Model<UserDoc>) ??

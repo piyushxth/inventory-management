@@ -1,6 +1,6 @@
 "use client";
 
-import { selectCartCount, useCartStore } from "@/libs/cart/store";
+import { selectCartCount, useCartStore } from "@/libs/actions/cart/store";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 

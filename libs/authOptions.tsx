@@ -35,7 +35,9 @@ export const authOptions: NextAuthOptions = {
           await connectMongoDB();
           console.log("[authorize] Connected to database");
           console.log("[authorize] Mongoose models:", mongoose.models);
-          const user = await MongooseUser.findOne({ email }).exec();
+          const user = await MongooseUser.findOne({ email })
+            .select("+passwordHash")
+            .exec();
 
           console.log("[authorize] User found:", user);
 

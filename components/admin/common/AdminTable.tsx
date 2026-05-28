@@ -7,13 +7,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import Pagination from "../tables/Pagination";
-import Input from "../form/input/InputField";
 
 export interface AdminTableColumn<T> {
   header: string;
   accessor?: keyof T;
   render?: (row: T) => React.ReactNode;
+  searchValue?: (row: T) => string;
   className?: string;
 }
 
@@ -24,6 +23,7 @@ interface AdminTableProps<T> {
   loading?: boolean;
   onRowSelect?: (selected: T[]) => void;
   actions?: (row: T) => React.ReactNode;
+  onRowClick?: (row: T) => void;
 }
 
 export default function AdminTable<T extends { id: string | number }>({
@@ -33,22 +33,13 @@ export default function AdminTable<T extends { id: string | number }>({
   loading = false,
   onRowSelect,
   actions,
+  onRowClick,
 }: AdminTableProps<T>) {
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
-  const filtered = data.filter((row) => {
-    return columns.some((col) => {
-      const value = col.accessor ? row[col.accessor] : "";
-      return (
-        typeof value === "string" &&
-        value.toLowerCase().includes(search.toLowerCase())
-      );
-    });
-  });
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(data.length / pageSize);
+  const paginated = data.slice((page - 1) * pageSize, page * pageSize);
 
   const allSelected =
     paginated.length > 0 &&
@@ -57,7 +48,7 @@ export default function AdminTable<T extends { id: string | number }>({
   const handleSelectAll = () => {
     if (allSelected) {
       const newSelected = selectedIds.filter(
-        (id) => !paginated.some((row) => row.id === id)
+        (id) => !paginated.some((row) => row.id === id),
       );
       setSelectedIds(newSelected);
       onRowSelect &&
@@ -88,42 +79,7 @@ export default function AdminTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="mb-4 flex flex-col gap-2 px-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Table
-        </h3>
-        <form className="flex-1 max-w-xs">
-          <div className="relative">
-            <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2">
-              <svg
-                className="fill-gray-500 dark:fill-gray-400"
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M3.04199 9.37381C3.04199 5.87712 5.87735 3.04218 9.37533 3.04218C12.8733 3.04218 15.7087 5.87712 15.7087 9.37381C15.7087 12.8705 12.8733 15.7055 9.37533 15.7055C5.87735 15.7055 3.04199 12.8705 3.04199 9.37381ZM9.37533 1.54218C5.04926 1.54218 1.54199 5.04835 1.54199 9.37381C1.54199 13.6993 5.04926 17.2055 9.37533 17.2055C11.2676 17.2055 13.0032 16.5346 14.3572 15.4178L17.1773 18.2381C17.4702 18.531 17.945 18.5311 18.2379 18.2382C18.5308 17.9453 18.5309 17.4704 18.238 17.1775L15.4182 14.3575C16.5367 13.0035 17.2087 11.2671 17.2087 9.37381C17.2087 5.04835 13.7014 1.54218 9.37533 1.54218Z"
-                  fill=""
-                />
-              </svg>
-            </span>
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="pl-[42px] h-[42px]"
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-        </form>
-      </div>
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03] z-0">
       <div className="custom-scrollbar max-w-full overflow-x-auto overflow-y-visible px-5 sm:px-6">
         <Table>
           <TableHeader className="border-y border-gray-100 py-3 dark:border-gray-800">
@@ -142,6 +98,7 @@ export default function AdminTable<T extends { id: string | number }>({
                   />
                 </div>
               </TableCell>
+
               {columns.map((col, idx) => (
                 <TableCell
                   key={idx}
@@ -173,15 +130,14 @@ export default function AdminTable<T extends { id: string | number }>({
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {paginated.map((row, rowIdx) => (
+            {paginated.map((row) => (
               <TableRow
                 key={row.id}
+                onClick={() => onRowClick?.(row)}
                 className={`$${
                   selectedIds.includes(row.id)
                     ? "bg-blue-50 dark:bg-blue-900/30"
-                    : rowIdx % 2 === 0
-                    ? "bg-white dark:bg-white/[0.01]"
-                    : "bg-gray-50 dark:bg-white/[0.03]"
+                    : "bg-white dark:bg-white/[0.01] cursor-pointer transition hover:bg-gray-100 dark:hover:bg-white/[0.03]"
                 }`}
               >
                 <TableCell className="py-3 pr-5 whitespace-nowrap sm:pr-5 align-middle">
@@ -189,9 +145,10 @@ export default function AdminTable<T extends { id: string | number }>({
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(row.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => handleSelectRow(row.id)}
                       aria-label={`Select row ${row.id}`}
-                      className="align-middle w-4 h-4 accent-brand-500"
+                      className="align-middle w-4 h-4 accent-brand-500 cursor-pointer"
                     />
                   </div>
                 </TableCell>
@@ -211,7 +168,10 @@ export default function AdminTable<T extends { id: string | number }>({
                   </TableCell>
                 ))}
                 {actions && (
-                  <TableCell className="px-5 py-3 whitespace-nowrap sm:px-6 align-middle">
+                  <TableCell
+                    className="px-5 py-3 whitespace-nowrap sm:px-6 align-middle"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {actions(row)}
                   </TableCell>
                 )}

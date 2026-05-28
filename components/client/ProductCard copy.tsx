@@ -24,7 +24,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       className="group block focus:outline-none"
       prefetch={false}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden">
+      <div className="relative aspect-4/5 w-full overflow-hidden">
         {product.primaryImageUrl ? (
           <Image
             src={product.primaryImageUrl}

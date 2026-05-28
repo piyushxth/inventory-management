@@ -16,18 +16,19 @@ const Instagram = () => {
   useEffect(() => {
     async function getInstagramData() {
       try {
-        const res = await fetch(
-          `https://graph.instagram.com/me/media?fields=id,media_url,permalink&access_token=IGAAnZBIAD4guVBZAGJqUzA3Mmt6SDIxd0NIMDhYQXBiOTRnLWR0bWY5YmVyczQwY0ZAwQUQweWVNMVFGRjVnUS1FSEZAsVnNuQ1otTnB1R2E0WGtEZAk12aDhJMXVxZAmEwS2tKUV94M3FsTnhiNEgtM2VHYjg2V2tHOF9qWmo0VnJyNAZDZD`,
-        );
+        const res = await fetch("/api/instagram"); // ✅ move to backend (recommended)
         const data = await res.json();
+
         console.log("Instagram Data:", data);
-        setPosts(data.data); // save data into state
+
+        setPosts(Array.isArray(data.data) ? data.data : []);
       } catch (error) {
         console.error("Error fetching Instagram data:", error);
+        setPosts([]); // fallback
       }
     }
 
-    getInstagramData(); // call once when component mounts
+    getInstagramData();
   }, []);
   return (
     <>
@@ -43,101 +44,7 @@ const Instagram = () => {
           </h2>
         </header>
       </section>
-      {/* <section className="">
-        <ul className="flex overflow-hidden">
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-          <li className="flex bg-[#f3f3f3] w-[150px] flex-none aspect-[4/5] basis-auto lg:basis-[16.6666666667%] ">
-            <figure className="relative flex w-full">
-              <Image
-                src="/client/instagram/instagram1.jpg"
-                alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                width={960}
-                height={1200}
-                sizes="(min-width: 1100px) 410px, 250px"
-                className=" h-full w-full object-cover"
-                priority={false} // change to true if it's above the fold
-              />
-            </figure>
-          </li>
-        </ul>
-      </section> */}
+
       <section>
         <ul className="flex overflow-hidden">
           {posts.map((post) => (

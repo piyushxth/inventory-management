@@ -264,7 +264,7 @@ async function seed() {
       description: faker.commerce.productDescription(),
       categoryId: category._id,
       genderId: gender._id,
-      isPublished: Math.random() < 0.9,
+      isOnSale: Math.random() < 0.9,
     });
     createdProducts.push(product);
 
@@ -304,20 +304,42 @@ async function seed() {
         },
       });
     }
-    await ProductVariant.insertMany(variants);
+    const insertedVariants = await ProductVariant.insertMany(variants);
 
-    // Images: 1-4 per product, first one primary.
-    const imageCount = faker.number.int({ min: 1, max: 4 });
-    const imagePaths = pickN(PRODUCT_IMAGES, imageCount);
-    await ProductImage.insertMany(
-      imagePaths.map((url, idx) => ({
+    const imageDocs = [];
+
+    // 1. Ensure each variant gets at least 1 image
+    for (const variant of insertedVariants) {
+      const url = pick(PRODUCT_IMAGES);
+
+      imageDocs.push({
         productId: product._id,
-        variantId: null,
+        variantId: variant._id,
         url: `${url}?w=600&h=600&fit=crop`,
-        sortOrder: idx,
-        isPrimary: idx === 0,
-      })),
-    );
+        sortOrder: 0,
+        isPrimary: true,
+      });
+    }
+
+    // 2. Add extra random images (optional)
+    const extraCount = faker.number.int({ min: 0, max: 2 });
+
+    for (let i = 0; i < extraCount; i++) {
+      const url = pick(PRODUCT_IMAGES);
+
+      const assignToVariant = Math.random() < 0.5;
+      const variant = assignToVariant ? pick(insertedVariants) : null;
+
+      imageDocs.push({
+        productId: product._id,
+        variantId: variant ? variant._id : null,
+        url: `${url}?w=600&h=600&fit=crop`,
+        sortOrder: i + 1,
+        isPrimary: false,
+      });
+    }
+
+    await ProductImage.insertMany(imageDocs);
   }
 
   const allVariants = await ProductVariant.find({}).lean();

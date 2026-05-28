@@ -83,7 +83,7 @@ const MediaCard = () => {
             </div>
           ))}
         </div>
-
+        {/*Prev */}
         <div className="absolute top-1/2 left-2  transform -translate-y-1/2 z-50">
           <button className="border border-white rounded-[4px] p-4 media-card-prev !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
@@ -103,6 +103,7 @@ const MediaCard = () => {
             </div>
           </button>
         </div>
+        {/*Next */}
         <div className="absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
           <button className="border border-white rounded-[4px] p-4 media-card-next !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl  flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">

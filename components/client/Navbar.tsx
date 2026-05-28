@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { CartButton } from "./CartButton";
 import { CartDrawer } from "./CartDrawer copy";
-import { selectCartCount, useCartStore } from "@/libs/cart/store";
+import { selectCartCount, useCartStore } from "@/libs/actions/cart/store";
+import Button from "../admin/ui/button/Button";
 
 const GENDER_LINKS: { label: string; slug: string }[] = [
   { label: "Men", slug: "men" },
@@ -22,7 +23,7 @@ const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const count = useCartStore(selectCartCount);
+  const count = useCartStore((s) => s.items.length);
   const hydrated = useCartStore((s) => s.hasHydrated);
   const open = useCartStore((s) => s.openCart);
 
@@ -30,7 +31,32 @@ const Navbar = () => {
   // swap to the real count after hydration.
   const displayCount = hydrated ? count : 0;
 
-  const borderColor = isSticky ? "border border-black" : "border border-white";
+  const whiteNavbarRoutes = ["/checkout", "/about", "/contact"];
+  const isProductDetailsPage = pathname.startsWith("/products/");
+  const hasWhiteNavbar =
+    isProductDetailsPage || whiteNavbarRoutes.includes(pathname);
+
+  const navBackgroundColor = isSticky
+    ? "fixed top-0 left-0 right-0 z-50 bg-white border-black"
+    : hasWhiteNavbar
+      ? "absolute top-0 left-0 right-0 z-50 bg-white border-black"
+      : "absolute top-0 left-0 right-0 z-50 border hover:bg-white hover:border-black";
+
+  const navTextColor = isSticky
+    ? "text-black"
+    : hasWhiteNavbar
+      ? "text-black"
+      : "text-white group-hover:text-black";
+  const navButtonColor = isSticky
+    ? "border-l border-black text-black group-hover:text-black"
+    : hasWhiteNavbar
+      ? "border-l border-black text-black"
+      : "border-l border-white text-white group-hover:border-black group-hover:text-black";
+  const borderColor = isSticky
+    ? "border border-black"
+    : hasWhiteNavbar
+      ? "border border-black"
+      : "border border-white";
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -82,28 +108,29 @@ const Navbar = () => {
     <>
       <nav
         ref={navbarRef}
-        className={`group ${borderColor} ${
-          isSticky
-            ? "fixed top-0 left-0 right-0 z-50 bg-white"
-            : "absolute top-0 left-0 right-0 z-50 hover:bg-white hover:border-black"
+        className={`group ${borderColor} 
+        ${
+          navBackgroundColor
         } fs-200 flex items-center justify-between transition-all duration-300`}
       >
         <ul className="flex items-center w-full">
           <li className="flex">
             <Link
               href="/"
-              className={`text-lg lg:text-lg py-2.5 px-6 fw-bold transition-colors duration-300 ${
-                isSticky
-                  ? "text-black group-hover:text-black"
-                  : "text-white group-hover:text-black"
-              }`}
+              className={`text-lg lg:text-lg py-2.5 px-6 fw-bold transition-colors duration-300`}
             >
               <div className="relative block w-[136px] h-[15px] lg:w-[145px] lg:h-[16px]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 700 100"
                   className="w-full h-auto group-hover:fill-black"
-                  fill={isSticky ? "#000000" : "#FFFFFF"}
+                  fill={
+                    isSticky
+                      ? "#000000"
+                      : hasWhiteNavbar
+                        ? "#000000"
+                        : "#FFFFFF"
+                  }
                 >
                   <text
                     x="50%"
@@ -122,16 +149,14 @@ const Navbar = () => {
           </li>
           <li
             className={`flex flex-1 group-hover:border-l group-hover:border-black ${
-              isSticky ? "border-l border-black" : "border-l border-white"
+              navButtonColor
             }`}
           >
             <nav className="hidden lg:flex items-center">
               <Link
                 href="/products"
                 className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                  isSticky
-                    ? "text-black group-hover:text-black"
-                    : "text-white group-hover:text-black"
+                  navTextColor
                 }`}
               >
                 Shop all
@@ -142,9 +167,7 @@ const Navbar = () => {
                   href={`/products?gender=${g.slug}`}
                   key={index}
                   className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                    isSticky
-                      ? "text-black group-hover:text-black"
-                      : "text-white group-hover:text-black"
+                    navTextColor
                   }`}
                 >
                   {g.label}
@@ -152,15 +175,20 @@ const Navbar = () => {
               ))}
             </nav>
           </li>
+          <button
+            className={`cursor-pointer py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
+              navButtonColor
+            }`}
+          >
+            Search
+          </button>
           <Link
             href={"/help"}
             className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-              isSticky
-                ? "border-l border-black"
-                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+              navButtonColor
             }`}
           >
-            HELP
+            Help
           </Link>
 
           {/* User Menu */}
@@ -169,9 +197,7 @@ const Navbar = () => {
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
-                  isSticky
-                    ? "border-l border-black text-black group-hover:text-black"
-                    : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+                  navButtonColor
                 }`}
               >
                 ACCOUNT
@@ -219,9 +245,7 @@ const Navbar = () => {
             <Link
               href="/auth/client/login"
               className={`py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 ${
-                isSticky
-                  ? "border-l border-black text-black group-hover:text-black"
-                  : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+                navButtonColor
               }`}
             >
               LOGIN
@@ -233,9 +257,7 @@ const Navbar = () => {
             onClick={open}
             aria-label={`Open cart (${displayCount} item${displayCount === 1 ? "" : "s"})`}
             className={`relative py-2.5 px-6 hidden md:block uppercase fw-semibold transition-colors duration-300 cursor-pointer ${
-              isSticky
-                ? "border-l border-black text-black group-hover:text-black"
-                : "border-l border-white text-white group-hover:border-black group-hover:text-black"
+              navButtonColor
             }`}
           >
             CART

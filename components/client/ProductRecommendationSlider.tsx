@@ -1,30 +1,35 @@
 "use client";
-import Image from "next/image";
+
 import React, { useEffect } from "react";
 import Swiper from "swiper";
 import { Navigation } from "swiper/modules";
 
-const images = [
-  "/client/hero-media/hero-media1.webp",
-  "/client/hero-media/hero-media2.webp",
-  "/client/hero-media/hero-media3.webp",
-  "/client/hero-media/hero-media4.webp",
-  "/client/hero-media/hero-media4.webp",
-];
+import { ProductCard } from "@/components/client/ProductCard copy";
+import Link from "next/link";
 
-const MediaCard = () => {
+type RecommendationType = "trending" | "related";
+
+type Props = {
+  items: any[];
+  type: RecommendationType;
+};
+
+const ProductRecommendationsSlider = ({ items, type }: Props) => {
   useEffect(() => {
-    const swiper = new Swiper(".media-card-swiper", {
+    const swiper = new Swiper(".product-recommendation-swiper", {
       modules: [Navigation],
+
       navigation: {
-        nextEl: ".media-card-next",
-        prevEl: ".media-card-prev",
+        nextEl: ".product-recommendation-next",
+        prevEl: ".product-recommendation-prev",
       },
+
       slidesPerView: "auto",
-      spaceBetween: 8, // must be a number!
+      spaceBetween: 16,
       resistanceRatio: 0,
       freeMode: false,
       centeredSlides: false,
+
       breakpoints: {
         320: {
           slidesPerView: "auto",
@@ -47,45 +52,38 @@ const MediaCard = () => {
   }, []);
 
   return (
-    <section className="mx-auto py-[60px] px-[16px] md:px-[16px] lg:py-[72px] lg:px-[40px]  overflow-hidden">
+    <section className="mx-auto py-[60px] px-[16px] md:px-[16px] lg:py-[px-60] lg:px-[16px]  overflow-hidden border">
       <header className="flex flex-wrap items-start lg:items-end justify-between pb-6 gap-4 border-b">
         <div className="flex flex-col gap-4">
           <h2 className="uppercase text-balance leading-8 fw-bold text-[30px] lg:text-[40px] tracking-[-3px]">
-            NEW Travel Backpack 40L
+            New Summer {type === "trending" ? "Trends" : "Related Products"}
           </h2>
           <div className="max-w-[640px] text-sm fw-semibold">
-            <p>SIZED FOR CARRY-ON. BUILT FOR COMFORT.</p>
+            <p>STYLED FOR FASHION. BUILT FOR COMFORT.</p>
           </div>
         </div>
-        <button className="border uppercase pt-2 pr-2.5 pb-2 pl-2 fw-semibold text-sm">
+        <Link
+          href={`/products?${type === "trending" ? "trending" : "related"}`}
+          className="border uppercase pt-2 pr-2.5 pb-2 pl-2 fw-semibold text-sm"
+        >
           Shop Now
-        </button>
+        </Link>
       </header>
-
-      <main className="relative pt-6 lg:pt-10 media-card-swiper w-full">
+      <main className="relative pt-6 lg:pt-10 product-recommendation-swiper w-full">
         <div className="swiper-wrapper flex  mx-[-16px] px-[16px] my-0 lg:mx-[-40px] py-0 lg:px-[40px] mr-[-40px]  ">
-          {images.map((image, index) => (
+          {items.map((p) => (
             <div
-              key={index}
-              className="swiper-slide basis-[250px] md:basis-[360px] lg:basis-[410px] flex-none w-[220px] snap-start  "
+              key={p.id}
+              className="swiper-slide basis-[250px] md:basis-[360px] lg:basis-[360px] flex-none w-[220px] snap-start  "
             >
-              <div className="relative aspect-[261/363] lg:aspect-[410/517]">
-                <Image
-                  src={image}
-                  alt="Person on an escalator wearing the Stubble & Co 40L travel backpack with capacity annotation."
-                  width={960}
-                  height={1200}
-                  sizes="(min-width: 1100px) 410px, 250px"
-                  className=" h-full w-full object-cover"
-                  priority={false} // change to true if it's above the fold
-                />
-              </div>
+              <ProductCard product={p} />
             </div>
           ))}
         </div>
-        {/*Prev */}
+
+        {/* Prev */}
         <div className="absolute top-1/2 left-2  transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 media-card-prev !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl flex items-center justify-center">
+          <button className="border border-white rounded-[4px] p-4  product-recommendation-prev !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"
@@ -103,9 +101,10 @@ const MediaCard = () => {
             </div>
           </button>
         </div>
-        {/*Next */}
+
+        {/* Next */}
         <div className="absolute top-1/2 right-2  transform -translate-y-1/2 z-50">
-          <button className="border border-white rounded-[4px] p-4 media-card-next !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl  flex items-center justify-center">
+          <button className="border border-white rounded-[4px] p-4 product-recommendation-next !static !w-10 !h-10 cursor-pointer !m-0 bg-transparent backdrop-blur-sm hover:backdrop-blur-2xl  flex items-center justify-center">
             <div className="w-6 h-6 flex items-center justify-center">
               <svg
                 className="w-4 h-4"
@@ -128,4 +127,4 @@ const MediaCard = () => {
   );
 };
 
-export default MediaCard;
+export default ProductRecommendationsSlider;

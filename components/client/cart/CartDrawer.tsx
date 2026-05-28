@@ -67,16 +67,17 @@ export function CartDrawer() {
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Shopping bag"
+        aria-label="Shopping cart"
         tabIndex={-1}
         className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl outline-none transition-transform duration-300 dark:bg-neutral-950 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <header className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
+        <header className="flex items-center justify-between gap-4 ">
           <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Shopping bag
+            Your Cart
           </h2>
+          <p className="text-sm text-neutral-500">{items.length} items</p>
           <button
             type="button"
             onClick={close}

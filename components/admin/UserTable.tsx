@@ -1,51 +1,25 @@
 "use client";
-
-import AdminTable, {
-  AdminTableColumn,
-} from "@/components/admin/common/AdminTable";
-import { useEffect, useState } from "react";
+import { User } from "@/libs/users.type";
+import React, { useEffect, useState } from "react";
+import AdminTable, { AdminTableColumn } from "./common/AdminTable";
+import Button from "./ui/button/Button";
+import Input from "./form/input/InputField";
 import { Dropdown } from "./ui/dropdown/Dropdown";
 import { DropdownItem } from "./ui/dropdown/DropdownItem";
-import ProductActionModal from "./ProductsActionModels";
-import ProductGeneralModal from "./ProductGeneralModal";
-import { getProductBySlug } from "@/libs/actions/products/r";
-import {
-  AdminProductTableItem,
-  CategoryType,
-  Gender,
-  ProductDetail,
-} from "@/libs/products.types";
-import { getCategories } from "@/libs/actions/categories/read";
-import { getGenders } from "@/libs/actions/genders/read";
-import ProductInventoryModal from "./ProductsInventoryModal";
-import Input from "./form/input/InputField";
-import Button from "./ui/button/Button";
-import ProductAddModal from "./ProductAddModal";
 
 type ModalType =
-  | "addProduct"
+  | "addUsers"
   | "actions"
   | "inventory"
   | "general"
   | "custom"
   | null;
 
-export default function ProductsClient({
-  products,
-}: {
-  products: AdminProductTableItem[];
-}) {
+export default function UserTable({ users }: { users: User[] }) {
   const [search, setSearch] = useState("");
-
   const [dropdownOpen, setDropdownOpen] = useState<string | number | null>(
     null,
   );
-  const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(
-    null,
-  );
-  const [categories, setCategories] = useState<CategoryType[]>([]);
-  const [genders, setGenders] = useState<Gender[]>([]);
-
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   useEffect(() => {
@@ -60,88 +34,33 @@ export default function ProductsClient({
     };
   }, [activeModal]);
 
-  useEffect(() => {
-    async function fetchMeta() {
-      const [cats, gens] = await Promise.all([getCategories(), getGenders()]);
-
-      setCategories(cats);
-      setGenders(gens);
-    }
-
-    fetchMeta();
-  }, []);
-
-  const columns: AdminTableColumn<AdminProductTableItem>[] = [
+  const columns: AdminTableColumn<User>[] = [
     {
-      header: "Name",
-
-      render: (row) => (
-        <div className="flex items-center gap-3">
+      header: "Avatar",
+      render: (row) =>
+        row.image ? (
           <img
-            src={row.primaryImageUrl || "/placeholder.png"}
-            alt={row.name}
-            className="w-10 h-10 object-cover rounded-md"
+            src={row.image}
+            alt="avatar"
+            className="w-10 h-10 rounded-full object-cover"
           />
-          <span>{row.name}</span>
-        </div>
-      ),
-
-      searchValue: (row) => row.name,
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+            {row.name?.[0]}
+          </div>
+        ),
+      className: "text-center",
     },
-
+    { header: "Name", accessor: "name" },
+    { header: "Email", accessor: "email" },
+    { header: "Role", accessor: "role" },
     {
-      header: "Price",
-
-      render: (row) => `${row.minPrice} - ${row.maxPrice}`,
-
-      searchValue: (row) => `${row.minPrice} ${row.maxPrice}`,
-    },
-
-    {
-      header: "Inventory",
-
-      render: (row) => (
-        <span>
-          {row.totalStock} for {row.variantCount}{" "}
-          {row.variantCount === 1 ? "variant" : "variants"}
-        </span>
-      ),
-
-      searchValue: (row) => `${row.totalStock} ${row.variantCount}`,
-    },
-
-    {
-      header: "Status",
-
-      render: (row) => {
-        const isActive = row.isOnSale;
-
-        return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${
-              isActive
-                ? "bg-green-100 text-green-500"
-                : "bg-red-100 text-red-600"
-            }`}
-          >
-            {isActive ? "Active" : "Inactive"}
-          </span>
-        );
-      },
-
-      searchValue: (row) => (row.isOnSale ? "active" : "inactive"),
-    },
-
-    {
-      header: "Created",
-
-      render: (row) => new Date(row.createdAt).toISOString().split("T")[0],
-
-      searchValue: (row) => new Date(row.createdAt).toISOString().split("T")[0],
+      header: "Created At",
+      render: (row) => new Date(row.createdAt).toLocaleDateString(),
     },
   ];
 
-  const filtered = products.filter((row) => {
+  const filtered = users.filter((row) => {
     return columns.some((col) => {
       let value = "";
 
@@ -158,7 +77,7 @@ export default function ProductsClient({
     <>
       <div className="mb-4 flex flex-col gap-2 px-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Products
+          Orders
         </h3>
         <div className="flex items-center gap-2">
           <form
@@ -194,32 +113,33 @@ export default function ProductsClient({
               />
             </div>
           </form>
-          <Button size="sm" onClick={() => setActiveModal("addProduct")}>
-            Add Product
+          <Button size="sm" onClick={() => setActiveModal("addUsers")}>
+            Add Users
           </Button>
         </div>
       </div>
+
       <AdminTable
         columns={columns}
         data={filtered}
         onRowClick={async (row) => {
           setActiveModal("actions");
           try {
-            const fullProduct = await getProductBySlug(row.slug);
-            console.log("Fetched Product Details:", fullProduct);
-            if (!fullProduct)
-              console.log(
-                "Failed to fetch product details for slug:",
-                row.slug,
-              );
-            setSelectedProduct(fullProduct);
+            // const fullProduct = await getProductBySlug(row.slug);
+            // console.log("Fetched Product Details:", fullProduct);
+            // if (!fullProduct)
+            //   console.log(
+            //     "Failed to fetch product details for slug:",
+            //     row.slug,
+            //   );
+            // setSelectedProduct(fullProduct);
           } catch (error) {
-            console.error(
-              "Error fetching product details for slug:",
-              row.slug,
-              error,
-            );
-            setSelectedProduct(null);
+            // console.error(
+            //   "Error fetching product details for slug:",
+            //   row.slug,
+            //   error,
+            // );
+            // setSelectedProduct(null);
           }
           // const fullProduct = await getProductBySlug(row.slug);
           // console.log("Fetched Product Details:", fullProduct);
@@ -263,43 +183,6 @@ export default function ProductsClient({
           </div>
         )}
       />
-      {activeModal === "addProduct" && (
-        <ProductAddModal
-          categories={categories}
-          genders={genders}
-          onClose={() => setActiveModal(null)}
-        />
-      )}
-      {selectedProduct && (
-        <>
-          {activeModal === "actions" && (
-            <ProductActionModal
-              product={selectedProduct}
-              onClose={() => {
-                setActiveModal(null);
-                setSelectedProduct(null);
-              }}
-              onSelect={(type) => setActiveModal(type)}
-            />
-          )}
-
-          {activeModal === "general" && (
-            <ProductGeneralModal
-              product={selectedProduct!}
-              categories={categories}
-              genders={genders}
-              onClose={() => setActiveModal(null)}
-            />
-          )}
-
-          {activeModal === "inventory" && (
-            <ProductInventoryModal
-              product={selectedProduct}
-              onClose={() => setActiveModal(null)}
-            />
-          )}
-        </>
-      )}
     </>
   );
 }

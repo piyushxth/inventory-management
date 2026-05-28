@@ -57,8 +57,8 @@ export function CartDrawer() {
         aria-label="Close cart"
         onClick={close}
         tabIndex={isOpen ? 0 : -1}
-        className={`absolute inset-0 bg-neutral-950/40 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
+        className={`absolute inset-0 bg-[#0009] transition-opacity duration-300 ${
+          isOpen ? "opacity-100 backdrop-blur-xs" : "opacity-0"
         }`}
       />
 
@@ -217,7 +217,7 @@ export function CartDrawer() {
             <Link
               href="/checkout"
               onClick={close}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-medium text-white transition"
+              className="flex justify-center text-center rounded-2xl items-center bg-black pt-[10px] pr-[18px] pb-[11px] text-white hover:bg-white hover:text-black border border-black transition"
             >
               Proceed to checkout
             </Link>

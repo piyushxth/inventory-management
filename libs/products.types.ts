@@ -141,6 +141,49 @@ export type AdminProductTableItem = {
   createdAt: string;
 };
 
+export const ORDER_STATUSES = [
+  "pending",
+  "paid",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export type AdminOrderTableItem = {
+  id: string;
+
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+
+  status: OrderStatus;
+
+  totalAmount: number;
+
+  itemCount: number;
+
+  contactEmail: string;
+
+  shippingAddress: {
+    id: string;
+    label?: string;
+  } | null;
+
+  billingAddress: {
+    id: string;
+    label?: string;
+  } | null;
+
+  notes: string;
+
+  createdAt: string;
+};
+
 // export type Category = {
 //   id: string;
 //   name: string;
